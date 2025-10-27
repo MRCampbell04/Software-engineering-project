@@ -18,11 +18,14 @@ BACKGROUND_COLOR = BLACK
 GRID_COLOR = GRAY
 
 class Board:
+##    def __init__(self):
+##        self.grid = [[0 for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
     def draw_board(self, screen):
         for r in range(GRID_ROWS):
             for c in range(GRID_COLS):
                 x = GRID_X + c * BLOCK_SIZE
                 y = GRID_Y + r * BLOCK_SIZE
+                
                 rect = pygame.Rect(x, y, BLOCK_SIZE, BLOCK_SIZE)
                 pygame.draw.rect(screen, GRID_COLOR, rect, 1)
         
@@ -33,6 +36,7 @@ class Board:
         pygame.draw.rect(screen, WHITE, (border_x, border_y, border_width, border_height), 1)
 
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
+    
     score_box_width = 180
     score_box_height = 35
     score_box_x = (SCREEN_WIDTH - score_box_width) // 2
@@ -86,3 +90,41 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     screen.blit(hold_label, (hold_label_x, 70))
     hold_box_rect = pygame.Rect(hold_box_x, box_top_y, hold_box_width, box_height)
     pygame.draw.rect(screen, WHITE, hold_box_rect, 1, border_radius=5)
+
+def main():
+    pygame.init()
+    pygame.font.init()
+    
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("tetris") #Name of Game
+    
+    font_path = "font/Audiowide-Regular.ttf"
+    font_score = pygame.font.Font(font_path, 20)
+    font_label = pygame.font.Font(font_path, 15)
+    font_value = pygame.font.Font(font_path, 16)
+    
+    board = Board()
+    
+    score = 0
+    level = 1
+    lines = 0
+    
+    running = True
+    clock = pygame.time.Clock()
+    
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        
+        screen.fill(BACKGROUND_COLOR)
+        
+        board.draw_board(screen)
+        draw_ui(screen, font_score, font_label, font_value, score, level, lines)
+        
+        pygame.display.flip()
+        clock.tick(60)
+        
+    pygame.quit()
+
+main()
