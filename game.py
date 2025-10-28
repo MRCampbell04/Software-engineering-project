@@ -14,7 +14,6 @@ def load_font(path, size):
         return pygame.font.SysFont("Arial", size)
 
 def draw_current_shape(screen, shape):
-    # draw shape cells using board's GRID_X, GRID_Y and BLOCK_SIZE
     for (x, y) in shape.get_coordinates():
         if y >= 0:
             px = GRID_X + x * BLOCK_SIZE
@@ -22,6 +21,17 @@ def draw_current_shape(screen, shape):
             rect = pygame.Rect(px, py, BLOCK_SIZE, BLOCK_SIZE)
             pygame.draw.rect(screen, shape.color, rect)
             pygame.draw.rect(screen, (40, 40, 40), rect, 1)
+
+def draw_fixed_blocks(screen, board):
+    for y in range(GRID_ROWS):
+        for x in range(GRID_COLS):
+            color = board[y][x]
+            if color:
+                px = GRID_X + x * BLOCK_SIZE
+                py = GRID_Y + y * BLOCK_SIZE
+                rect = pygame.Rect(px, py, BLOCK_SIZE, BLOCK_SIZE)
+                pygame.draw.rect(screen, color, rect)
+                pygame.draw.rect(screen, (40, 40, 40), rect, 1)
 
 class Game:
     def __init__(self):
@@ -32,7 +42,6 @@ class Game:
         pygame.display.set_caption("Tetris - Demo")
 
         # fonts
-        # try common folder name variations
         font_candidates = ["font/Audiowide-Regular.ttf", "Font/Audiowide-Regular.ttf"]
         font_path = None
         for p in font_candidates:
@@ -43,9 +52,9 @@ class Game:
             except Exception:
                 continue
 
-        self.font_score = load_font(font_path, 20) if font_path else pygame.font.SysFont("Arial", 20)
-        self.font_label = load_font(font_path, 15) if font_path else pygame.font.SysFont("Arial", 15)
-        self.font_value = load_font(font_path, 16) if font_path else pygame.font.SysFont("Arial", 16)
+        self.font_score = load_font(font_path, 20)
+        self.font_label = load_font(font_path, 15)
+        self.font_value = load_font(font_path, 16)
 
         # UI board
         self.ui_board = UIBoard()
@@ -55,6 +64,9 @@ class Game:
         self.score = 0
         self.level = 1
         self.lines = 0
+
+        # fixed blocks board
+        self.board = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
 
         # timing
         self.clock = pygame.time.Clock()
@@ -87,21 +99,40 @@ class Game:
             if not self.current.is_inside_board():
                 self.current.move_left()
         if keys[pygame.K_DOWN]:
-            # soft drop
-            self.current.move_down()
-            if not self.current.is_inside_board():
-                self.current.y -= 1
+            self.soft_drop()
 
         if keys[pygame.K_SPACE]:
-            # hard drop (move down until would leave board)
-            while self.current.is_inside_board():
-                self.current.move_down()
+            self.hard_drop()
+
+    def soft_drop(self):
+        self.current.move_down()
+        if self.check_collision():
             self.current.y -= 1
-            # after hard drop, spawn new piece next loop
+            self.lock_piece()
             self.spawn_new_piece()
+
+    def hard_drop(self):
+        while not self.check_collision():
+            self.current.move_down()
+        self.current.y -= 1
+        self.lock_piece()
+        self.spawn_new_piece()
+
+    def check_collision(self):
+        for x, y in self.current.get_coordinates():
+            if y >= GRID_ROWS or (y >= 0 and self.board[y][x] is not None):
+                return True
+        return False
+
+    def lock_piece(self):
+        for x, y in self.current.get_coordinates():
+            if y >= 0:
+                self.board[y][x] = self.current.color
 
     def spawn_new_piece(self):
         self.current = Shape(x=GRID_COLS // 2, y=0, color=(0, 255, 255))
+        if self.check_collision():
+            self.game_over = True
 
     def update(self, dt):
         if self.game_over or self.paused:
@@ -110,26 +141,17 @@ class Game:
         self.fall_timer += dt
         if self.fall_timer >= self.fall_speed:
             self.current.move_down()
-            self.fall_timer = 0
-
-            if not self.current.is_inside_board():
-                # revert
+            if self.check_collision():
                 self.current.y -= 1
-                # simple landing behavior: spawn new piece
-                # (no stacking/line-clear in this demo)
-                # if the piece is at top and cannot move -> game over
-                if self.current.y <= 0:
-                    self.game_over = True
-                else:
-                    self.spawn_new_piece()
+                self.lock_piece()
+                self.spawn_new_piece()
+            self.fall_timer = 0
 
     def draw(self):
         self.screen.fill(BACKGROUND_COLOR)
-        # draw UI board and UI elements
         self.ui_board.draw_board(self.screen)
         draw_ui(self.screen, self.font_score, self.font_label, self.font_value, self.score, self.level, self.lines)
-
-        # draw current falling piece
+        draw_fixed_blocks(self.screen, self.board)
         draw_current_shape(self.screen, self.current)
 
         if self.paused:
@@ -143,7 +165,6 @@ class Game:
             text = font.render("GAME OVER", True, (255, 0, 0))
             rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20))
             self.screen.blit(text, rect)
-
             small = pygame.font.Font(None, 28)
             tip = small.render("Press R to restart", True, (255, 255, 255))
             rect2 = tip.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 20))
@@ -157,6 +178,7 @@ class Game:
         self.level = 1
         self.lines = 0
         self.fall_timer = 0
+        self.board = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
         self.game_over = False
         self.paused = False
 
