@@ -9,7 +9,6 @@ movement, automatic fall, simple landing detection and restart.
 """
 
 import pygame
-
 from board import Board as BoardUI
 from shapes import Shape
 
@@ -23,7 +22,7 @@ FALL_SPEED_MS = 500  # piece falls every 500 ms by default
 class Game:
     """Minimal Tetris-like game controller."""
 
-    def _init_(self):
+    def __init__(self):
         """Initialize pygame, screen, boards, piece and timers."""
         pygame.init()
         pygame.font.init()
@@ -69,7 +68,7 @@ class Game:
             if not self.shape.is_inside_board():
                 self.shape.move_left()
         if keys[pygame.K_DOWN]:
-            # soft drop
+            # Soft drop
             self.shape.move_down()
             if not self.shape.is_inside_board():
                 self.shape.y -= 1
@@ -92,28 +91,20 @@ class Game:
     def draw(self):
         """Draw UI board, shape and overlay messages."""
         self.screen.fill((0, 0, 0))
-        # draw grid and UI boxes
         self.ui_board.draw_board(self.screen)
-        # draw current shape using shapes.Board.draw or shape coordinates
-        # shapes.Board.draw expects (screen, shape) in your shapes.py
+
+        # Draw current shape
         try:
-            # If shapes.Board.draw exists and is used elsewhere,
-            # we won't import it here; shapes.draw used in shapes.py demo.
             from shapes import Board as LogicBoard
             logic_board = LogicBoard()
             logic_board.draw(self.screen, self.shape)
         except Exception:
-            # fallback: draw single-cell manually (safe minimal option)
             coords = self.shape.get_coordinates()
             for x, y in coords:
-                rect = pygame.Rect(
-                    x * 30,  # CELL_SIZE from shapes.py assumed 30
-                    y * 30,
-                    30,
-                    30,
-                )
+                rect = pygame.Rect(x * 30, y * 30, 30, 30)
                 pygame.draw.rect(self.screen, self.shape.color, rect)
 
+        # Display "Game Over" text
         if self.game_over:
             font = pygame.font.Font(None, 48)
             text = font.render("GAME OVER", True, (255, 0, 0))
@@ -148,5 +139,6 @@ class Game:
         pygame.quit()
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     Game().run()
+
