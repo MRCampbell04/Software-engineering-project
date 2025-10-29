@@ -5,16 +5,14 @@ from board import Board as UIBoard, draw_ui, SCREEN_WIDTH, SCREEN_HEIGHT, BACKGR
 from shapes import Shape
 
 FPS = 60
-FALL_SPEED_MS = 500  # سرعة نزول القطعة
+FALL_SPEED_MS = 500
 
-# دالة تحميل الخط
 def load_font(path, size):
     try:
         return pygame.font.Font(path, size)
     except Exception:
         return pygame.font.SysFont("Arial", size)
 
-# رسم الشكل الحالي
 def draw_current_shape(screen, shape):
     for (x, y) in shape.get_coordinates():
         if y >= 0:
@@ -24,7 +22,6 @@ def draw_current_shape(screen, shape):
             pygame.draw.rect(screen, shape.color, rect)
             pygame.draw.rect(screen, (40, 40, 40), rect, 1)
 
-# رسم البلوكات الثابتة
 def draw_fixed_blocks(screen, board):
     for y in range(GRID_ROWS):
         for x in range(GRID_COLS):
@@ -40,11 +37,9 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.font.init()
-
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Tetris - Demo")
 
-        # الخطوط
         font_candidates = ["font/Audiowide-Regular.ttf", "Font/Audiowide-Regular.ttf"]
         font_path = None
         for p in font_candidates:
@@ -58,11 +53,8 @@ class Game:
         self.font_score = load_font(font_path, 20)
         self.font_label = load_font(font_path, 15)
         self.font_value = load_font(font_path, 16)
-
-        # واجهة اللوحة
         self.ui_board = UIBoard()
 
-        # إعدادات أولية
         self.colors = [
             (0, 255, 255),
             (255, 255, 0),
@@ -77,10 +69,8 @@ class Game:
         self.score = 0
         self.level = 1
         self.lines = 0
-
         self.board = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
 
-        # التوقيت
         self.clock = pygame.time.Clock()
         self.fall_speed = FALL_SPEED_MS
         self.fall_timer = 0
@@ -114,7 +104,6 @@ class Game:
         if keys[pygame.K_SPACE]:
             self.hard_drop()
 
-    # فحص إن الشكل داخل الحدود
     def is_valid_position(self):
         for x, y in self.current.get_coordinates():
             if x < 0 or x >= GRID_COLS or y >= GRID_ROWS:
