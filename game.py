@@ -1,18 +1,20 @@
-# game.py
 import pygame
 import sys
+import random
 from board import Board as UIBoard, draw_ui, SCREEN_WIDTH, SCREEN_HEIGHT, BACKGROUND_COLOR, GRID_X, GRID_Y, BLOCK_SIZE, GRID_ROWS, GRID_COLS
 from shapes import Shape
 
 FPS = 60
-FALL_SPEED_MS = 500  # default fall speed (ms)
+FALL_SPEED_MS = 500  # سرعة نزول القطعة
 
+# دالة تحميل الخط
 def load_font(path, size):
     try:
         return pygame.font.Font(path, size)
     except Exception:
         return pygame.font.SysFont("Arial", size)
 
+# رسم الشكل الحالي
 def draw_current_shape(screen, shape):
     for (x, y) in shape.get_coordinates():
         if y >= 0:
@@ -22,6 +24,7 @@ def draw_current_shape(screen, shape):
             pygame.draw.rect(screen, shape.color, rect)
             pygame.draw.rect(screen, (40, 40, 40), rect, 1)
 
+# رسم البلوكات الثابتة
 def draw_fixed_blocks(screen, board):
     for y in range(GRID_ROWS):
         for x in range(GRID_COLS):
@@ -41,7 +44,7 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Tetris - Demo")
 
-        # fonts
+        # الخطوط
         font_candidates = ["font/Audiowide-Regular.ttf", "Font/Audiowide-Regular.ttf"]
         font_path = None
         for p in font_candidates:
@@ -56,19 +59,28 @@ class Game:
         self.font_label = load_font(font_path, 15)
         self.font_value = load_font(font_path, 16)
 
-        # UI board
+        # واجهة اللوحة
         self.ui_board = UIBoard()
 
-        # game objects
-        self.current = Shape(x=4, y=0, color=(0, 255, 255))
+        # إعدادات أولية
+        self.colors = [
+            (0, 255, 255),
+            (255, 255, 0),
+            (128, 0, 128),
+            (0, 255, 0),
+            (255, 0, 0),
+            (255, 165, 0),
+            (0, 0, 255),
+        ]
+
+        self.current = Shape(x=4, y=0, color=random.choice(self.colors))
         self.score = 0
         self.level = 1
         self.lines = 0
 
-        # fixed blocks board
         self.board = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
 
-        # timing
+        # التوقيت
         self.clock = pygame.time.Clock()
         self.fall_speed = FALL_SPEED_MS
         self.fall_timer = 0
@@ -81,7 +93,6 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
-
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     self.paused = not self.paused
@@ -92,56 +103,77 @@ class Game:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.current.move_left()
-            if not self.current.is_inside_board():
+            if not self.is_valid_position():
                 self.current.move_right()
         if keys[pygame.K_RIGHT]:
             self.current.move_right()
-            if not self.current.is_inside_board():
+            if not self.is_valid_position():
                 self.current.move_left()
         if keys[pygame.K_DOWN]:
             self.soft_drop()
-
         if keys[pygame.K_SPACE]:
             self.hard_drop()
 
+    # فحص إن الشكل داخل الحدود
+    def is_valid_position(self):
+        for x, y in self.current.get_coordinates():
+            if x < 0 or x >= GRID_COLS or y >= GRID_ROWS:
+                return False
+            if y >= 0 and self.board[y][x] is not None:
+                return False
+        return True
+
     def soft_drop(self):
         self.current.move_down()
-        if self.check_collision():
+        if not self.is_valid_position():
             self.current.y -= 1
             self.lock_piece()
             self.spawn_new_piece()
 
     def hard_drop(self):
-        while not self.check_collision():
+        while self.is_valid_position():
             self.current.move_down()
         self.current.y -= 1
         self.lock_piece()
         self.spawn_new_piece()
 
-    def check_collision(self):
-        for x, y in self.current.get_coordinates():
-            if y >= GRID_ROWS or (y >= 0 and self.board[y][x] is not None):
-                return True
-        return False
-
     def lock_piece(self):
         for x, y in self.current.get_coordinates():
-            if y >= 0:
+            if y >= 0 and 0 <= x < GRID_COLS:
                 self.board[y][x] = self.current.color
+        cleared = self.clear_lines()
+        if cleared > 0:
+            self.lines += cleared
+            self.score += cleared * 100
+            if self.lines % 10 == 0:
+                self.level += 1
+                self.fall_speed = max(100, self.fall_speed - 50)
+
+    def clear_lines(self):
+        new_board = []
+        cleared = 0
+        for y in range(GRID_ROWS):
+            if all(self.board[y][x] is not None for x in range(GRID_COLS)):
+                cleared += 1
+            else:
+                new_board.append(self.board[y])
+        for _ in range(cleared):
+            new_board.insert(0, [None for _ in range(GRID_COLS)])
+        self.board = new_board
+        return cleared
 
     def spawn_new_piece(self):
-        self.current = Shape(x=GRID_COLS // 2, y=0, color=(0, 255, 255))
-        if self.check_collision():
+        self.current = Shape(x=GRID_COLS // 2, y=0, color=random.choice(self.colors))
+        if not self.is_valid_position():
             self.game_over = True
 
     def update(self, dt):
         if self.game_over or self.paused:
             return
-
         self.fall_timer += dt
         if self.fall_timer >= self.fall_speed:
             self.current.move_down()
-            if self.check_collision():
+            if not self.is_valid_position():
                 self.current.y -= 1
                 self.lock_piece()
                 self.spawn_new_piece()
@@ -173,14 +205,15 @@ class Game:
         pygame.display.flip()
 
     def restart(self):
-        self.current = Shape(x=GRID_COLS // 2, y=0, color=(0, 255, 255))
+        self.board = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
+        self.current = Shape(x=GRID_COLS // 2, y=0, color=random.choice(self.colors))
         self.score = 0
         self.level = 1
         self.lines = 0
+        self.fall_speed = FALL_SPEED_MS
         self.fall_timer = 0
-        self.board = [[None for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
-        self.game_over = False
         self.paused = False
+        self.game_over = False
 
     def run(self):
         while self.running:
