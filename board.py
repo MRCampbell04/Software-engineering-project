@@ -2,7 +2,7 @@ import pygame
 
 
 SCREEN_WIDTH = 440       
-SCREEN_HEIGHT = 750      
+SCREEN_HEIGHT = 750       
 
 BLOCK_SIZE = 30          
 GRID_ROWS = 20           
@@ -27,9 +27,6 @@ class Board:
     def draw_board(self, screen):
         """
         Draws the grid structure on the screen.
-
-        Args:
-            screen (pygame.Surface): The Pygame display surface where the grid will be drawn.
         """
         
         for r in range(GRID_ROWS):
@@ -49,15 +46,6 @@ class Board:
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     """
     Draws all extra UI components (score, level, next block box...).
-
-    Args:
-        screen (pygame.Surface): The game window.
-        font_score (pygame.font.Font): Font for displaying score text.
-        font_label (pygame.font.Font): Font for small labels (LEVEL, LINES...).
-        font_value (pygame.font.Font): Font for numeric values.
-        score (int): The current player score.
-        level (int): The current game level.
-        lines (int): The number of cleared lines.
     """
 
     score_box_width = 180
@@ -71,6 +59,7 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     score_text_rect = score_text_surf.get_rect(center=score_box_rect.center)
     screen.blit(score_text_surf, score_text_rect)
 
+    # Load icons (make sure images exist)
     window_icon = pygame.image.load("images/1.png")
     pygame.display.set_icon(window_icon)
 
@@ -115,43 +104,41 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     pygame.draw.rect(screen, WHITE, hold_box_rect, 1, border_radius=5)
 
 
-def main():
-    """
-    The main loop that initializes Pygame, draws the board and UI.
-    """
-    pygame.init()
-    pygame.font.init()
+# ✅ Only run main if this file is executed directly
+if __name__ == "__main__":
+    def main():
+        pygame.init()
+        pygame.font.init()
 
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Tetris")
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Tetris")
 
-    font_path = "font/Audiowide-Regular.ttf"
-    font_score = pygame.font.Font(font_path, 20)
-    font_label = pygame.font.Font(font_path, 15)
-    font_value = pygame.font.Font(font_path, 16)
+        font_path = "font/Audiowide-Regular.ttf"
+        font_score = pygame.font.Font(font_path, 20)
+        font_label = pygame.font.Font(font_path, 15)
+        font_value = pygame.font.Font(font_path, 16)
 
-    board = Board()
+        board = Board()
 
-    score = 0
-    level = 1
-    lines = 0
+        score = 0
+        level = 1
+        lines = 0
 
-    running = True
-    clock = pygame.time.Clock()
+        running = True
+        clock = pygame.time.Clock()
 
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
-        screen.fill(BACKGROUND_COLOR)
-        board.draw_board(screen)
-        draw_ui(screen, font_score, font_label, font_value, score, level, lines)
+            screen.fill(BACKGROUND_COLOR)
+            board.draw_board(screen)
+            draw_ui(screen, font_score, font_label, font_value, score, level, lines)
 
-        pygame.display.flip()
-        clock.tick(60)
+            pygame.display.flip()
+            clock.tick(60)
 
-    pygame.quit()
+        pygame.quit()
 
-
-main()
+    main()
