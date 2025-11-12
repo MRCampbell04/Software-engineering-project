@@ -1,149 +1,151 @@
 import pygame
+import random
 
-CELL_SIZE = 30  
-BOARD_WIDTH = 10 
-BOARD_HEIGHT = 20 
+# Game settings
+CELL_SIZE = 30
+BOARD_WIDTH = 10
+BOARD_HEIGHT = 20
 
+# Shape class
 class Shape:
-    """
-    Class representing a single block shape in the game.
-    Used to handle the block position, color, and movement logic.
-    """
+    def __init__(self, x, y, color, blocks):
+        self.x = x                # Horizontal position
+        self.y = y                # Vertical position
+        self.color = color        # Shape color
+        self.blocks = blocks      # Relative block coordinates
 
-    def __init__(self, x, y, color):
-        """
-        Initialize a new shape object.
-
-        Args:
-            x (int): The horizontal position of the shape.
-            y (int): The vertical position of the shape.
-            color (tuple): RGB color of the shape.
-        """
-        self.x = x
-        self.y = y
-        self.color = color
-
+    # Move down
     def move_down(self):
-        """
-        Move the shape one cell down on the board.
-        """
         self.y += 1
 
+    # Move left
     def move_left(self):
-        """
-        Move the shape one cell to the left.
-        """
         self.x -= 1
 
+    # Move right
     def move_right(self):
-        """
-        Move the shape one cell to the right.
-        """
         self.x += 1
 
-    def is_inside_board(self):
-        """
-        Check if the shape is still inside the board boundaries.
+    # Get all block coordinates on the board
+    def get_coords(self):
+        return [(self.x + bx, self.y + by) for bx, by in self.blocks]
 
-        Returns:
-            bool: True if inside the board, False if outside.
-        """
-        return 0 <= self.x < BOARD_WIDTH and 0 <= self.y < BOARD_HEIGHT
+# Create a random shape
+def create_shape():
+    shapes = [
+        [(0,0),(1,0),(0,1),(1,1)],   # O
+        [(0,0),(-1,0),(1,0),(2,0)],  # I
+        [(0,0),(0,1),(0,2),(1,2)],   # L
+        [(0,0),(-1,0),(1,0),(0,1)],  # T
+        [(0,0),(1,0),(0,1),(-1,1)]   # S
+    ]
+    colors = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(255,165,0),(128,0,128)]
+    return Shape(4, 0, random.choice(colors), random.choice(shapes))
 
-    def get_coordinates(self):
-        """
-        Get the coordinates occupied by the shape on the grid.
-
-        Returns:
-            list: List of (x, y) tuples representing the block positions.
-        """
-        return [(self.x, self.y)]
-
-
+# Board class
 class Board:
-    """
-    Class representing the game board grid.
-    Handles drawing the grid and the active shape.
-    """
-
     def __init__(self):
-        """
-        Initialize the game board with empty cells.
-        """
-        self.grid = [[(0, 0, 0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
+        # Game grid, each cell stores color, (0,0,0) means empty
+        self.grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
+    # Check if the shape can move without collision
+    def can_move(self, shape):
+        for x, y in shape.get_coords():
+            if x < 0 or x >= BOARD_WIDTH or y >= BOARD_HEIGHT:  # Out of board
+                return False
+            if y >= 0 and self.grid[y][x] != (0,0,0):          # Block exists
+                return False
+        return True
+
+    # Place the shape on the board
+    def place(self, shape):
+        for x, y in shape.get_coords():
+            if 0 <= y < BOARD_HEIGHT:
+                self.grid[y][x] = shape.color
+
+    # Draw board and current shape
     def draw(self, screen, shape):
-        """
-        Draw the board grid and the current shape on the screen.
-
-        Args:
-            screen (pygame.Surface): The screen surface to draw on.
-            shape (Shape): The active shape object to draw.
-        """
-
         for row in range(BOARD_HEIGHT):
             for col in range(BOARD_WIDTH):
-                rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(screen, (40, 40, 40), rect, 1) 
+                rect = pygame.Rect(col*CELL_SIZE,row*CELL_SIZE,CELL_SIZE,CELL_SIZE)
+                pygame.draw.rect(screen,(40,40,40),rect,1)  # Light grid
+                if self.grid[row][col] != (0,0,0):          # Draw fixed blocks
+                    pygame.draw.rect(screen,self.grid[row][col],rect)
+        # Draw current falling shape
+        for x, y in shape.get_coords():
+            if 0 <= y < BOARD_HEIGHT:
+                rect = pygame.Rect(x*CELL_SIZE,y*CELL_SIZE,CELL_SIZE,CELL_SIZE)
+                pygame.draw.rect(screen,shape.color,rect)
 
-        for (x, y) in shape.get_coordinates():
-            if 0 <= y < BOARD_HEIGHT: 
-                rect = pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(screen, shape.color, rect)
-
-
+# Main function
 def main():
-    """
-    Main function to start and run the game loop.
-    Handles game initialization, user input, and screen updates.
-    """
     pygame.init()
-    screen = pygame.display.set_mode((BOARD_WIDTH * CELL_SIZE, BOARD_HEIGHT * CELL_SIZE))
-    pygame.display.set_caption("Blocks Logic & Movement")
+    screen = pygame.display.set_mode((BOARD_WIDTH*CELL_SIZE,BOARD_HEIGHT*CELL_SIZE))
+    pygame.display.set_caption("Simple Shapes Game")
 
     clock = pygame.time.Clock()
-    running = True
-
     board = Board()
-    shape = Shape(x=4, y=0, color=(255, 0, 0))
-
+    shape = create_shape()
     fall_time = 0
-    fall_speed = 500  
+    fall_speed = 400          # Fall speed in milliseconds
+    game_over = False         # Game over flag
 
+    running = True
     while running:
-        dt = clock.tick(60)
+        dt = clock.tick(60)   # Frame rate
         fall_time += dt
-  
-        if fall_time > fall_speed:
-            shape.move_down()
-            fall_time = 0
-            if not shape.is_inside_board():
-                shape.y -= 1
 
+        # Automatic falling
+        if not game_over:
+            if fall_time > fall_speed:
+                shape.move_down()
+                if not board.can_move(shape):  # Reached bottom or another block
+                    shape.y -= 1
+                    board.place(shape)        # Fix the shape
+                    # Create new shape
+                    new_shape = create_shape()
+                    if not board.can_move(new_shape):
+                        game_over = True       # Stop game if no space
+                    else:
+                        shape = new_shape
+                fall_time = 0
+
+        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            shape.move_left()
-            if not shape.is_inside_board():
-                shape.move_right()
-        if keys[pygame.K_RIGHT]:
-            shape.move_right()
-            if not shape.is_inside_board():
+        # Player controls
+        if not game_over:
+            keys = pygame.key.get_pressed()
+            # Move left
+            if keys[pygame.K_LEFT]:
                 shape.move_left()
-        if keys[pygame.K_DOWN]:
-            shape.move_down()
-            if not shape.is_inside_board():
-                shape.y -= 1
+                if not board.can_move(shape):
+                    shape.move_right()
+            # Move right
+            if keys[pygame.K_RIGHT]:
+                shape.move_right()
+                if not board.can_move(shape):
+                    shape.move_left()
+            # Move down faster
+            if keys[pygame.K_DOWN]:
+                shape.move_down()
+                if not board.can_move(shape):
+                    shape.y -= 1
+                    board.place(shape)
+                    new_shape = create_shape()
+                    if not board.can_move(new_shape):
+                        game_over = True
+                    else:
+                        shape = new_shape
 
-        screen.fill((0, 0, 0))
-        board.draw(screen, shape)
+        # Draw everything
+        screen.fill((0,0,0))
+        board.draw(screen,shape)
         pygame.display.flip()
 
     pygame.quit()
 
 
-if __name__ == "__main__":
-    main()
+main()
