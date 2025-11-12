@@ -18,8 +18,6 @@ BACKGROUND_COLOR = BLACK
 GRID_COLOR = GRAY
 
 class Board:
-##    def __init__(self):
-##        self.grid = [[0 for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
     def draw_board(self, screen):
         for r in range(GRID_ROWS):
             for c in range(GRID_COLS):
@@ -96,7 +94,7 @@ def main():
     pygame.font.init()
     
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("tetris") #Name of Game
+    pygame.display.set_caption("tetris") # Name of Game
     
     font_path = "font/Audiowide-Regular.ttf"
     font_score = pygame.font.Font(font_path, 20)
@@ -127,7 +125,7 @@ def main():
         
     pygame.quit()
 
+
+# --- FIX: Prevents running main() automatically when imported ---
 if __name__ == "__main__":
     main()
-
-
