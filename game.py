@@ -70,6 +70,13 @@ class Board:
             if 0 <= y < BOARD_HEIGHT:
                 self.grid[y][x] = shape.color
 
+    def clear_full_rows(self):
+        full_rows = [i for i, row in enumerate(self.grid) if all(cell != (0,0,0) for cell in row)]
+        for row in full_rows:
+            del self.grid[row]
+            self.grid.insert(0, [(0,0,0) for _ in range(BOARD_WIDTH)])
+        return len(full_rows)
+
     def draw(self, screen, shape):
         for row in range(BOARD_HEIGHT):
             for col in range(BOARD_WIDTH):
@@ -154,13 +161,31 @@ def game_loop(screen):
     board = Board()
     shape = create_shape()
     fall_time = 0
-    fall_speed = 500  # ⚡ متوسط السرعة
+    fall_speed = 500
     game_over = False
+
+    score = 0
+    level = 1
+    lines_cleared = 0
 
     running = True
     while running:
         dt = clock.tick(60)
         fall_time += dt
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if game_over and event.type == pygame.KEYDOWN:
+                # Restart the game
+                board = Board()
+                shape = create_shape()
+                fall_time = 0
+                game_over = False
+                score = 0
+                level = 1
+                lines_cleared = 0
 
         if not game_over:
             if fall_time > fall_speed:
@@ -168,6 +193,12 @@ def game_loop(screen):
                 if not board.can_move(shape):
                     shape.y -= 1
                     board.place(shape)
+                    cleared = board.clear_full_rows()
+                    if cleared > 0:
+                        lines_cleared += cleared
+                        score += cleared * 100
+                        level = lines_cleared // 5 + 1
+                        fall_speed = max(100, 500 - (level-1)*50)
                     new_shape = create_shape()
                     if not board.can_move(new_shape):
                         game_over = True
@@ -175,12 +206,6 @@ def game_loop(screen):
                         shape = new_shape
                 fall_time = 0
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        if not game_over:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
                 shape.move_left()
@@ -195,18 +220,35 @@ def game_loop(screen):
                 if not board.can_move(shape):
                     shape.y -= 1
                     board.place(shape)
+                    cleared = board.clear_full_rows()
+                    if cleared > 0:
+                        lines_cleared += cleared
+                        score += cleared * 100
+                        level = lines_cleared // 5 + 1
+                        fall_speed = max(100, 500 - (level-1)*50)
                     new_shape = create_shape()
                     if not board.can_move(new_shape):
                         game_over = True
                     else:
                         shape = new_shape
 
+        # Draw
         screen.fill(BLACK)
         board.draw(screen, shape)
+
+        # Draw score and level
+        font = pygame.font.Font(None, 30)
+        score_text = font.render(f"Score: {score}", True, WHITE)
+        level_text = font.render(f"Level: {level}", True, WHITE)
+        screen.blit(score_text, (20, 20))
+        screen.blit(level_text, (20, 50))
+
+        # Draw Game Over
         if game_over:
-            font = pygame.font.Font(None, 50)
-            text = font.render("GAME OVER", True, RED)
+            font_go = pygame.font.Font(None, 50)
+            text = font_go.render("GAME OVER - Press Any Key to Restart", True, RED)
             screen.blit(text, (SCREEN_WIDTH//2 - text.get_width()//2, SCREEN_HEIGHT//2))
+
         pygame.display.flip()
 
 # ------------------- Main -------------------
@@ -219,4 +261,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
