@@ -5,7 +5,7 @@ from board import Board as UIBoard, draw_ui, SCREEN_WIDTH, SCREEN_HEIGHT, BACKGR
 from shapes import Shape
 
 FPS = 60
-FALL_SPEED_MS = 800  # 🐢 Slowed down the falling speed from 500 → 800 (slower blocks)
+FALL_SPEED_MS = 650  # 🐢 Slowed down the falling speed from 500 → 800 (slower blocks)
 
 def load_font(path, size):
     try:
