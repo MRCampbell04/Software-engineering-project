@@ -2,7 +2,6 @@ import pygame
 
 SCREEN_WIDTH = 440
 SCREEN_HEIGHT = 750
-
 BLOCK_SIZE = 30
 GRID_ROWS = 20
 GRID_COLS = 10
@@ -33,6 +32,5 @@ class Board:
         pygame.draw.rect(screen, WHITE, (border_x, border_y, border_width, border_height), 1)
 
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
-    # نفس الكود اللي عندك هنا
-    # رسم score, level, lines, hold, next
-    pass  # خلي الكود هنا بدون أي loop أو display.set_mode
+    # ضع هنا كود رسم score, level, lines بدون أي loop
+    pass
