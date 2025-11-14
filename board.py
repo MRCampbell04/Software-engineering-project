@@ -17,7 +17,7 @@ WHITE = (255, 255, 255)
 BACKGROUND_COLOR = BLACK
 GRID_COLOR = GRAY
 
-class Board:
+class GameBoardUI:
 ##    def __init__(self):
 ##        self.grid = [[0 for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
     def draw_board(self, screen):
