@@ -126,5 +126,51 @@ def main():
         clock.tick(60)
         
     pygame.quit()
+class Board:
+    def __init__(self):
+        # Create 20x10 grid filled with black (empty)
+        self.grid = [[(0, 0, 0) for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
+
+    def can_move(self, shape):
+        # Check if shape can move inside grid without collision
+        for x, y in shape.get_coords():
+            if x < 0 or x >= GRID_COLS:
+                return False
+            if y < 0:
+                continue
+            if y >= GRID_ROWS:
+                return False
+            if self.grid[y][x] != (0, 0, 0):
+                return False
+        return True
+
+    def place(self, shape):
+        # Place the shape permanently on the board
+        for x, y in shape.get_coords():
+            if 0 <= y < GRID_ROWS:
+                self.grid[y][x] = shape.color
+
+    def clear_lines(self):
+        # Remove filled lines and return number of cleared lines
+        full_rows = []
+        for r in range(GRID_ROWS):
+            if all(self.grid[r][c] != (0, 0, 0) for c in range(GRID_COLS)):
+                full_rows.append(r)
+
+        for r in full_rows:
+            del self.grid[r]
+            self.grid.insert(0, [(0,0,0) for _ in range(GRID_COLS)])
+
+        return len(full_rows)
+
+    def draw_blocks(self, screen):
+        # Draw all saved blocks on board
+        for r in range(GRID_ROWS):
+            for c in range(GRID_COLS):
+                if self.grid[r][c] != (0,0,0):
+                    x = GRID_X + c * BLOCK_SIZE
+                    y = GRID_Y + r * BLOCK_SIZE
+                    rect = pygame.Rect(x, y, BLOCK_SIZE, BLOCK_SIZE)
+                    pygame.draw.rect(screen, self.grid[r][c], rect)
 
 
