@@ -43,7 +43,7 @@ def create_shape():
     return Shape(4, 0, random.choice(colors), random.choice(shapes))
 
 # Board class
-class Board:
+class LogicBoard:
     def __init__(self):
         # Game grid, each cell stores color, (0,0,0) means empty
         self.grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
