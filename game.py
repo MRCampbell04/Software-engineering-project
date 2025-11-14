@@ -1,277 +1,191 @@
 import pygame
-import random
 import sys
+import random
+
+# import layout & UI helpers from the board file you provided
+from board import GRID_X, GRID_Y, BLOCK_SIZE, GRID_COLS, GRID_ROWS, draw_ui, BACKGROUND_COLOR, WHITE
+# import shape factory from the shapes file you provided
+from shapes import create_shape
 
 SCREEN_WIDTH = 440
 SCREEN_HEIGHT = 750
 
-CELL_SIZE = 30
-BOARD_WIDTH = 10
-BOARD_HEIGHT = 20
-
-GRID_X = (SCREEN_WIDTH - (BOARD_WIDTH * CELL_SIZE)) // 2
-GRID_Y = SCREEN_HEIGHT - (BOARD_HEIGHT * CELL_SIZE) - 5
-
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-RED = (200, 50, 50)
-LIGHT_RED = (230, 80, 80)
-SILVER = (191, 191, 191)
+# game logic grid uses the same GRID_COLS / GRID_ROWS from board.py
+EMPTY = (0, 0, 0)
 
 font_path = "font/Audiowide-Regular.ttf"
 
-class Shape:
-    def __init__(self, x, y, color, blocks):
-        self.x = x
-        self.y = y
-        self.color = color
-        self.blocks = blocks
 
-    def move_down(self):
-        self.y += 1
+def make_empty_grid():
+    return [[EMPTY for _ in range(GRID_COLS)] for _ in range(GRID_ROWS)]
 
-    def move_left(self):
-        self.x -= 1
 
-    def move_right(self):
-        self.x += 1
+def can_move(grid, shape):
+    for x, y in shape.get_coords():
+        if x < 0 or x >= GRID_COLS or y >= GRID_ROWS:
+            return False
+        if y >= 0 and grid[y][x] != EMPTY:
+            return False
+    return True
 
-    def get_coords(self):
-        return [(self.x + bx, self.y + by) for bx, by in self.blocks]
 
-def create_shape():
-    shapes = [
-        [(0,0),(1,0),(0,1),(1,1)],
-        [(0,0),(-1,0),(1,0),(2,0)],
-        [(0,0),(0,1),(0,2),(1,2)],
-        [(0,0),(-1,0),(1,0),(0,1)],
-        [(0,0),(1,0),(0,1),(-1,1)]
-    ]
-    colors = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(255,165,0),(128,0,128)]
-    return Shape(4, 0, random.choice(colors), random.choice(shapes))
+def place_shape(grid, shape):
+    for x, y in shape.get_coords():
+        if 0 <= y < GRID_ROWS and 0 <= x < GRID_COLS:
+            grid[y][x] = shape.color
 
-class Board:
-    def __init__(self):
-        self.grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
-    def can_move(self, shape):
-        for x, y in shape.get_coords():
-            if x < 0 or x >= BOARD_WIDTH or y >= BOARD_HEIGHT:
-                return False
-            if y >= 0 and self.grid[y][x] != (0,0,0):
-                return False
-        return True
+def clear_full_rows(grid):
+    new_grid = [row for row in grid if any(cell == EMPTY for cell in row)]
+    cleared = GRID_ROWS - len(new_grid)
+    for _ in range(cleared):
+        new_grid.insert(0, [EMPTY for _ in range(GRID_COLS)])
+    return new_grid, cleared
 
-    def place(self, shape):
-        for x, y in shape.get_coords():
-            if 0 <= y < BOARD_HEIGHT:
-                self.grid[y][x] = shape.color
 
-    def clear_full_rows(self):
-        full_rows = [i for i, row in enumerate(self.grid) if all(cell != (0,0,0) for cell in row)]
-        for row in full_rows:
-            del self.grid[row]
-            self.grid.insert(0, [(0,0,0) for _ in range(BOARD_WIDTH)])
-        return len(full_rows)
+def draw_fixed_blocks(screen, grid):
+    for r in range(GRID_ROWS):
+        for c in range(GRID_COLS):
+            if grid[r][c] != EMPTY:
+                rect = pygame.Rect(GRID_X + c * BLOCK_SIZE, GRID_Y + r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+                pygame.draw.rect(screen, grid[r][c], rect)
 
-    def draw(self, screen, shape):
-        for row in range(BOARD_HEIGHT):
-            for col in range(BOARD_WIDTH):
-                rect = pygame.Rect(GRID_X + col*CELL_SIZE, GRID_Y + row*CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(screen,(40,40,40),rect,1)
-                if self.grid[row][col] != (0,0,0):
-                    pygame.draw.rect(screen,self.grid[row][col],rect)
-        for x, y in shape.get_coords():
-            if 0 <= y < BOARD_HEIGHT:
-                rect = pygame.Rect(GRID_X + x*CELL_SIZE, GRID_Y + y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                pygame.draw.rect(screen,shape.color,rect)
 
-class Button:
-    def __init__(self, text, y, width=270, height=50, color=WHITE, text_color=WHITE, hover_color=None, filled=False):
-        self.text = text
-        self.y = y
-        self.width = width
-        self.height = height
-        self.color = color
-        self.text_color = text_color
-        self.hover_color = hover_color or color
-        self.filled = filled
-        self.rect = pygame.Rect(SCREEN_WIDTH//2 - width//2, y, width, height)
-        self.border_radius = 12
+def draw_shape(screen, shape):
+    for x, y in shape.get_coords():
+        if 0 <= y < GRID_ROWS and 0 <= x < GRID_COLS:
+            rect = pygame.Rect(GRID_X + x * BLOCK_SIZE, GRID_Y + y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+            pygame.draw.rect(screen, shape.color, rect)
 
-    def draw(self, surface, font):
-        mouse_pos = pygame.mouse.get_pos()
-        is_hovered = self.rect.collidepoint(mouse_pos)
-        current_color = self.hover_color if is_hovered else self.color
 
-        if self.filled:
-            pygame.draw.rect(surface, current_color, self.rect, border_radius=self.border_radius)
-        else:
-            pygame.draw.rect(surface, current_color, self.rect, 2, border_radius=self.border_radius)
+def draw_next_preview(screen, next_shape):
+    grid_right = GRID_X + (GRID_COLS * BLOCK_SIZE)
+    next_box_width = 120
+    next_box_x = grid_right - next_box_width - 5
+    next_box_rect = pygame.Rect(next_box_x + 17, 95, next_box_width, 40)  # matches draw_ui's y
+    if next_shape:
+        cx = next_box_rect.centerx
+        cy = next_box_rect.centery
+        for bx, by in next_shape.blocks:
+            rx = cx + bx * 10
+            ry = cy + by * 10
+            r = pygame.Rect(rx - 8, ry - 8, 16, 16)
+            pygame.draw.rect(screen, next_shape.color, r)
 
-        label = font.render(self.text, True, self.text_color)
-        surface.blit(label, (self.rect.centerx - label.get_width()/2, self.rect.centery - label.get_height()/2))
 
-    def is_clicked(self, event):
-        return event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos)
+def main():
+    pygame.init()
+    pygame.font.init()
 
-def show_menu(screen):
-    title_font = pygame.font.Font(font_path, 80)
-    button_font = pygame.font.Font(font_path, 32)
-
-    buttons = [
-        Button("Start Game", 320, text_color=BLACK, hover_color=SILVER, filled=True),
-        Button("Exit", 480, width=200, color=RED, text_color=WHITE, hover_color=LIGHT_RED, filled=True)
-    ]
-
-    running = True
-    while running:
-        screen.fill(BLACK)
-        title = title_font.render("Welcome", True, WHITE)
-        name = pygame.font.Font(font_path, 40).render("Tetris", True, WHITE)
-        screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()/2, 120))
-        screen.blit(name, (SCREEN_WIDTH//2 - name.get_width()/2, 230))
-
-        for btn in buttons:
-            btn.draw(screen, button_font)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            for btn in buttons:
-                if btn.is_clicked(event):
-                    if btn.text == "Start Game":
-                        game_loop(screen)
-                        running = False
-                    elif btn.text == "Exit":
-                        pygame.quit()
-                        sys.exit()
-
-        pygame.display.flip()
-
-def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
-    score_box_width = 180
-    score_box_height = 35
-    score_box_x = (SCREEN_WIDTH - score_box_width) // 2
-    score_box_y = 15
-    score_box_rect = pygame.Rect(score_box_x, score_box_y, score_box_width, score_box_height)
-    pygame.draw.rect(screen, WHITE, score_box_rect, 2, border_radius=8)
-    score_text_surf = font_score.render(f"SCORE: {score}", True, WHITE)
-    score_text_rect = score_text_surf.get_rect(center=score_box_rect.center)
-    screen.blit(score_text_surf, score_text_rect)
-
-    labels_y = 80
-    values_y = 105
-
-    level_x = GRID_X - 40
-    level_label = font_label.render("LEVEL", True, WHITE)
-    level_value = font_value.render(str(level), True, WHITE)
-    screen.blit(level_label, (level_x, labels_y))
-    screen.blit(level_value, (level_x + (level_label.get_width() - level_value.get_width()) // 2, values_y))
-
-    lines_x = GRID_X + 30
-    lines_label = font_label.render("LINES", True, WHITE)
-    lines_value = font_value.render(str(lines), True, WHITE)
-    screen.blit(lines_label, (lines_x, labels_y))
-    screen.blit(lines_value, (lines_x + (lines_label.get_width() - lines_value.get_width()) // 2, values_y))
-
-def game_loop(screen):
-    clock = pygame.time.Clock()
-    board = Board()
-    shape = create_shape()
-    fall_time = 0
-    fall_speed = 500
-    game_over = False
-
-    score = 0
-    level = 1
-    lines_cleared = 0
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Tetris")
 
     font_score = pygame.font.Font(font_path, 20)
     font_label = pygame.font.Font(font_path, 15)
     font_value = pygame.font.Font(font_path, 16)
 
+    grid = make_empty_grid()
+    current = create_shape()
+    next_shape = create_shape()
+
+    clock = pygame.time.Clock()
+    fall_time = 0
+    fall_speed = 500
+
+    score = 0
+    level = 1
+    lines = 0
     running = True
+    game_over = False
+
     while running:
         dt = clock.tick(60)
         fall_time += dt
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                running = False
             if game_over and event.type == pygame.KEYDOWN:
-                board = Board()
-                shape = create_shape()
+                grid = make_empty_grid()
+                current = create_shape()
+                next_shape = create_shape()
                 fall_time = 0
-                game_over = False
+                fall_speed = 500
                 score = 0
                 level = 1
-                lines_cleared = 0
+                lines = 0
+                game_over = False
 
         if not game_over:
             if fall_time > fall_speed:
-                shape.move_down()
-                if not board.can_move(shape):
-                    shape.y -= 1
-                    board.place(shape)
-                    cleared = board.clear_full_rows()
+                current.move_down()
+                if not can_move(grid, current):
+                    current.y -= 1
+                    place_shape(grid, current)
+                    grid, cleared = clear_full_rows(grid)
                     if cleared > 0:
-                        lines_cleared += cleared
+                        lines += cleared
+                        # simple scoring: 100 points per row (keeps original behavior)
                         score += cleared * 100
-                        level = lines_cleared // 5 + 1
-                        fall_speed = max(100, 500 - (level-1)*50)
-                    new_shape = create_shape()
-                    if not board.can_move(new_shape):
+                        level = lines // 5 + 1
+                        fall_speed = max(100, 500 - (level - 1) * 50)
+                    current = next_shape
+                    next_shape = create_shape()
+                    if not can_move(grid, current):
                         game_over = True
-                    else:
-                        shape = new_shape
                 fall_time = 0
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
-                shape.move_left()
-                if not board.can_move(shape):
-                    shape.move_right()
+                current.move_left()
+                if not can_move(grid, current):
+                    current.move_right()
             if keys[pygame.K_RIGHT]:
-                shape.move_right()
-                if not board.can_move(shape):
-                    shape.move_left()
+                current.move_right()
+                if not can_move(grid, current):
+                    current.move_left()
             if keys[pygame.K_DOWN]:
-                shape.move_down()
-                if not board.can_move(shape):
-                    shape.y -= 1
-                    board.place(shape)
-                    cleared = board.clear_full_rows()
+                current.move_down()
+                if not can_move(grid, current):
+                    current.y -= 1
+                    place_shape(grid, current)
+                    grid, cleared = clear_full_rows(grid)
                     if cleared > 0:
-                        lines_cleared += cleared
+                        lines += cleared
                         score += cleared * 100
-                        level = lines_cleared // 5 + 1
-                        fall_speed = max(100, 500 - (level-1)*50)
-                    new_shape = create_shape()
-                    if not board.can_move(new_shape):
+                        level = lines // 5 + 1
+                        fall_speed = max(100, 500 - (level - 1) * 50)
+                    current = next_shape
+                    next_shape = create_shape()
+                    if not can_move(grid, current):
                         game_over = True
-                    else:
-                        shape = new_shape
 
-        screen.fill(BLACK)
-        board.draw(screen, shape)
-        draw_ui(screen, font_score, font_label, font_value, score, level, lines_cleared)
+        screen.fill(BACKGROUND_COLOR)
+        # draw board grid and UI from original board.py
+        from board import Board as UIDrawer  # import here to avoid circular issues if running standalone
+        uid = UIDrawer()
+        uid.draw_board(screen)
+
+        # draw fixed blocks (from logic grid) and current shape at GRID offsets
+        draw_fixed_blocks(screen, grid)
+        if not game_over:
+            draw_shape(screen, current)
+
+        # draw UI (score, level, lines, next/hold boxes)
+        draw_ui(screen, font_score, font_label, font_value, score, level, lines)
+        # draw simple preview for next inside the NEXT box
+        draw_next_preview(screen, next_shape)
 
         if game_over:
             font_go = pygame.font.Font(None, 50)
-            text = font_go.render("GAME OVER - Press Any Key to Restart", True, RED)
-            screen.blit(text, (SCREEN_WIDTH//2 - text.get_width()//2, SCREEN_HEIGHT//2))
+            text = font_go.render("GAME OVER - Press Any Key to Restart", True, (200, 50, 50))
+            screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, SCREEN_HEIGHT // 2))
 
         pygame.display.flip()
 
-def main():
-    pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Tetris")
-    show_menu(screen)
     pygame.quit()
+    sys.exit()
+
 
 if __name__ == "__main__":
     main()
