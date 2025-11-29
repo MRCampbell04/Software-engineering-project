@@ -1,3 +1,5 @@
 During the initial setup, some development files (board.py, game.py) were mistakenly pushed directly to the main branch.
-The Integration Team identified this issue and reminded all developers to commit their code to their own development branches instead of main.
-Starting from the next sprint, all teams will follow the proper branching strategy to ensure clean integration and stable main releases.
+The Integration Team identified this issue and reminded all developers to commit their code to their own development 
+branches instead of main.
+Starting from the next sprint, all teams will follow the proper branching strategy to ensure clean integration 
+and stable main releases.

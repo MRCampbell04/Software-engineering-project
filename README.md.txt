@@ -9,15 +9,6 @@ This project is a Tetris game implemented in Python using Pygame. The game inclu
 
 ---
 
-## Team Members
-- Ahmed Elsayed Shalby
-- Ahmed Saleh Samaha
-- Ahmed Osama Awad
-- Ahmed Taha Beheiry
-- Omar Ibrahem Shwareb
-
----
-
 ## Project Structure
 The project is organized into four main Python files:
 
