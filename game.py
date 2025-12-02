@@ -1,3 +1,10 @@
+import pygame
+import sys
+from shapes import Shape, create_shape, CELL_SIZE
+from board import Board, GRID_X, GRID_Y, BLACK, WHITE
+from home import Button, RED, font_path
+
+# ------------------- Game Loop -------------------
 def game_loop(screen):
     clock = pygame.time.Clock()
     board = Board()
@@ -14,7 +21,7 @@ def game_loop(screen):
     font_label = pygame.font.Font(font_path, 15)
     font_value = pygame.font.Font(font_path, 16)
 
-    state = "home"  # بداية اللعبة على Home
+    state = "home"  # البداية على Home page
 
     # إعداد أزرار Home
     start_button = Button("Start Game", 320)
@@ -60,7 +67,7 @@ def game_loop(screen):
         screen.fill(BLACK)
 
         if state == "home":
-            # رسم Home page فقط
+            # رسم Home page
             title_font = pygame.font.Font(font_path, 80)
             title = title_font.render("Welcome", True, WHITE)
             name = pygame.font.Font(font_path, 40).render("Tetris", True, WHITE)
@@ -70,7 +77,7 @@ def game_loop(screen):
                 btn.draw(screen, pygame.font.Font(font_path, 32))
 
         elif state == "playing":
-            # التحكم في الشيبس وحركتها
+            # التحكم بالشيبس
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
                 shape.move_left()
@@ -105,9 +112,9 @@ def game_loop(screen):
                         shape = new_shape
                 fall_time = 0
 
-            # رسم Board + الشيب الحالي
-            board.draw_board(screen)      # رسم Grid من البورد
-            # رسم الشيبس المتحركة
+            # رسم الجريد
+            board.draw_board(screen)
+            # رسم الشيب الحالي
             for x, y in shape.get_coords():
                 if 0 <= y < 20:
                     rect = pygame.Rect(GRID_X + x*CELL_SIZE, GRID_Y + y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -122,3 +129,44 @@ def game_loop(screen):
 
         pygame.display.flip()
 
+# ------------------- Draw UI -------------------
+def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
+    # Score Box
+    score_box_width = 180
+    score_box_height = 35
+    score_box_x = (440 - score_box_width) // 2
+    score_box_y = 15
+    score_box_rect = pygame.Rect(score_box_x, score_box_y, score_box_width, score_box_height)
+    pygame.draw.rect(screen, WHITE, score_box_rect, 2, border_radius=8)
+    score_text_surf = font_score.render(f"SCORE: {score}", True, WHITE)
+    score_text_rect = score_text_surf.get_rect(center=score_box_rect.center)
+    screen.blit(score_text_surf, score_text_rect)
+
+    # Level & Lines
+    labels_y = 80
+    values_y = 105
+    box_top_y = values_y - 10
+    box_height = 40
+
+    level_x = GRID_X - 40
+    level_label = font_label.render("LEVEL", True, WHITE)
+    level_value = font_value.render(str(level), True, WHITE)
+    screen.blit(level_label, (level_x, labels_y))
+    screen.blit(level_value, (level_x + (level_label.get_width() - level_value.get_width()) // 2, values_y))
+
+    lines_x = GRID_X + 30
+    lines_label = font_label.render("LINES", True, WHITE)
+    lines_value = font_value.render(str(lines), True, WHITE)
+    screen.blit(lines_label, (lines_x, labels_y))
+    screen.blit(lines_value, (lines_x + (lines_label.get_width() - lines_value.get_width()) // 2, values_y))
+
+# ------------------- Main -------------------
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((440, 750))
+    pygame.display.set_caption("Tetris")
+    game_loop(screen)
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
