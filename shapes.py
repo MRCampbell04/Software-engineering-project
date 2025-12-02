@@ -76,7 +76,7 @@ class Board:
             if 0 <= y < BOARD_HEIGHT:
                 rect = pygame.Rect(x*CELL_SIZE,y*CELL_SIZE,CELL_SIZE,CELL_SIZE)
                 pygame.draw.rect(screen,shape.color,rect)
-'''
+
 # Main function
 def main():
     pygame.init()
@@ -148,4 +148,4 @@ def main():
     pygame.quit()
 
 
-main()'''
+main()
