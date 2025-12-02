@@ -2,7 +2,7 @@ import pygame
 import sys
 from shapes import Shape, create_shape, CELL_SIZE
 from board import Board, GRID_X, GRID_Y, BLACK, WHITE
-from home import Button ,RED, font_path
+from home import Button, RED, font_path
 
 # ------------------- Game Loop -------------------
 def game_loop(screen):
@@ -29,7 +29,6 @@ def game_loop(screen):
     leaderboard_button = Button("Leaderboard", 400)
     about_button = Button("About Us", 480)
     exit_button = Button("Exit", 580, width=200, color=RED, text_color=WHITE, hover_color=(230,80,80), filled=True)
-
     buttons = [start_button, leaderboard_button, about_button, exit_button]
 
     running = True
@@ -42,6 +41,7 @@ def game_loop(screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            # التعامل مع الهوم
             if state == "home":
                 for btn in buttons:
                     if btn.is_clicked(event):
@@ -54,8 +54,8 @@ def game_loop(screen):
                             print("Leaderboard pressed")
                         elif btn.text == "About Us":
                             print("About Us pressed")
+            # إعادة تشغيل اللعبة بعد game over
             elif state == "game_over" and event.type == pygame.KEYDOWN:
-                # إعادة تشغيل اللعبة
                 board = Board()
                 shape = create_shape()
                 fall_time = 0
@@ -68,7 +68,6 @@ def game_loop(screen):
         screen.fill(BLACK)
 
         if state == "home":
-            # رسم Home Page
             title_font = pygame.font.Font(font_path, 80)
             title = title_font.render("Welcome", True, WHITE)
             name = pygame.font.Font(font_path, 40).render("Tetris", True, WHITE)
@@ -78,7 +77,6 @@ def game_loop(screen):
                 btn.draw(screen, pygame.font.Font(font_path, 32))
 
         elif state == "playing":
-            # تحكم اللعبة
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
                 shape.move_left()
@@ -138,7 +136,6 @@ def game_loop(screen):
 
 # ------------------- Main UI -------------------
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
-    # Score Box
     score_box_width = 180
     score_box_height = 35
     score_box_x = (440 - score_box_width) // 2
@@ -149,7 +146,6 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     score_text_rect = score_text_surf.get_rect(center=score_box_rect.center)
     screen.blit(score_text_surf, score_text_rect)
 
-    # Level & Lines
     labels_y = 80
     values_y = 105
     box_top_y = values_y - 10
@@ -172,7 +168,6 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((440, 750))
     pygame.display.set_caption("Tetris")
-
     game_loop(screen)
     pygame.quit()
 
