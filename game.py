@@ -7,19 +7,6 @@ from home import Button, RED, font_path
 # ------------------- Game Loop -------------------
 def game_loop(screen):
     clock = pygame.time.Clock()
-    board = Board()
-    shape = create_shape()
-    fall_time = 0
-    fall_speed = 500
-    game_over = False
-
-    score = 0
-    level = 1
-    lines_cleared = 0
-
-    font_score = pygame.font.Font(font_path, 20)
-    font_label = pygame.font.Font(font_path, 15)
-    font_value = pygame.font.Font(font_path, 16)
 
     # حالة اللعبة: "home", "playing", "game_over"
     state = "home"
@@ -31,6 +18,20 @@ def game_loop(screen):
     exit_button = Button("Exit", 580, width=200, color=RED, text_color=WHITE, hover_color=(230,80,80), filled=True)
     buttons = [start_button, leaderboard_button, about_button, exit_button]
 
+    # المتغيرات اللي هتظهر في حالة playing
+    board = None
+    shape = None
+    fall_time = 0
+    fall_speed = 500
+    game_over = False
+    score = 0
+    level = 1
+    lines_cleared = 0
+
+    font_score = pygame.font.Font(font_path, 20)
+    font_label = pygame.font.Font(font_path, 15)
+    font_value = pygame.font.Font(font_path, 16)
+
     running = True
     while running:
         dt = clock.tick(60)
@@ -41,12 +42,19 @@ def game_loop(screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            # التعامل مع الهوم
             if state == "home":
                 for btn in buttons:
                     if btn.is_clicked(event):
                         if btn.text == "Start Game":
+                            # تهيئة اللعبة عند بدء اللعب
                             state = "playing"
+                            board = Board()
+                            shape = create_shape()
+                            fall_time = 0
+                            game_over = False
+                            score = 0
+                            level = 1
+                            lines_cleared = 0
                         elif btn.text == "Exit":
                             pygame.quit()
                             sys.exit()
@@ -54,8 +62,9 @@ def game_loop(screen):
                             print("Leaderboard pressed")
                         elif btn.text == "About Us":
                             print("About Us pressed")
-            # إعادة تشغيل اللعبة بعد game over
             elif state == "game_over" and event.type == pygame.KEYDOWN:
+                # إعادة تشغيل اللعبة
+                state = "playing"
                 board = Board()
                 shape = create_shape()
                 fall_time = 0
@@ -63,11 +72,11 @@ def game_loop(screen):
                 score = 0
                 level = 1
                 lines_cleared = 0
-                state = "playing"
 
         screen.fill(BLACK)
 
         if state == "home":
+            # رسم Home Page
             title_font = pygame.font.Font(font_path, 80)
             title = title_font.render("Welcome", True, WHITE)
             name = pygame.font.Font(font_path, 40).render("Tetris", True, WHITE)
@@ -76,7 +85,8 @@ def game_loop(screen):
             for btn in buttons:
                 btn.draw(screen, pygame.font.Font(font_path, 32))
 
-        elif state == "playing":
+        elif state == "playing" and board and shape:
+            # تحكم اللعبة
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
                 shape.move_left()
@@ -91,7 +101,10 @@ def game_loop(screen):
                 if not board.can_move(shape):
                     shape.y -= 1
                     board.place(shape)
-                    cleared = board.clear_full_rows()
+                    if hasattr(board, 'clear_full_rows'):
+                        cleared = board.clear_full_rows()
+                    else:
+                        cleared = 0
                     if cleared > 0:
                         lines_cleared += cleared
                         score += cleared * 100
@@ -109,7 +122,10 @@ def game_loop(screen):
                 if not board.can_move(shape):
                     shape.y -= 1
                     board.place(shape)
-                    cleared = board.clear_full_rows()
+                    if hasattr(board, 'clear_full_rows'):
+                        cleared = board.clear_full_rows()
+                    else:
+                        cleared = 0
                     if cleared > 0:
                         lines_cleared += cleared
                         score += cleared * 100
@@ -128,7 +144,7 @@ def game_loop(screen):
             draw_ui(screen, font_score, font_label, font_value, score, level, lines_cleared)
 
         elif state == "game_over":
-            font_go = pygame.font.Font(None, 50)
+            font_go = pygame.font.Font(font_path, 40)
             text = font_go.render("GAME OVER - Press Any Key to Restart", True, RED)
             screen.blit(text, (440//2 - text.get_width()//2, 750//2))
 
@@ -136,6 +152,7 @@ def game_loop(screen):
 
 # ------------------- Main UI -------------------
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
+    # Score Box
     score_box_width = 180
     score_box_height = 35
     score_box_x = (440 - score_box_width) // 2
@@ -146,6 +163,7 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     score_text_rect = score_text_surf.get_rect(center=score_box_rect.center)
     screen.blit(score_text_surf, score_text_rect)
 
+    # Level & Lines
     labels_y = 80
     values_y = 105
     box_top_y = values_y - 10
@@ -168,6 +186,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((440, 750))
     pygame.display.set_caption("Tetris")
+
     game_loop(screen)
     pygame.quit()
 
