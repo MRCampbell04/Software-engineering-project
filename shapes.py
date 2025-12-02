@@ -41,7 +41,7 @@ def create_shape():
     ]
     colors = [(255,0,0),(0,255,0),(0,0,255),(255,255,0),(255,165,0),(128,0,128)]
     return Shape(4, 0, random.choice(colors), random.choice(shapes))
-'''
+
 # Board class
 class Board:
     def __init__(self):
@@ -76,7 +76,7 @@ class Board:
             if 0 <= y < BOARD_HEIGHT:
                 rect = pygame.Rect(x*CELL_SIZE,y*CELL_SIZE,CELL_SIZE,CELL_SIZE)
                 pygame.draw.rect(screen,shape.color,rect)
-
+'''
 # Main function
 def main():
     pygame.init()
