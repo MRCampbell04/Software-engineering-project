@@ -3,6 +3,8 @@ import sys
 import random
 import os
 
+sys.path.append(r"C:\Users\dinae\Downloads\Tetris")    # يحتوي على board.py و home.py
+
 # ------------------- Imports ------------------
 from shapes import Shape, create_shape
 from board import Board, GRID_X, GRID_Y, CELL_SIZE, BLACK, WHITE, RED, font_path
