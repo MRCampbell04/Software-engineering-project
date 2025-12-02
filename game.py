@@ -3,11 +3,6 @@ import sys
 import random
 import os
 
-# ------------------- Paths for branches -------------------
-# عدّلي المسارات دي على حسب مكان كل برانش عندك
-sys.path.append(r"C:\Users\dinae\Downloads\Software-engineering-project-Dev-B")  # مكان shapes.py
-sys.path.append(r"C:\Users\dinae\Downloads\Software-engineering-project-Dev-C")   # مكان board.py
-
 # ------------------- Imports ------------------
 from shapes import Shape, create_shape
 from board import Board, GRID_X, GRID_Y, CELL_SIZE, BLACK, WHITE, RED, font_path
