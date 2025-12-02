@@ -88,7 +88,7 @@ def main():
     shape = create_shape()
     fall_time = 0
     fall_speed = 400          # Fall speed in milliseconds
-    game_over = False         # Game over flag
+    game_over = False         # Game over flag 
 
     running = True
     while running:
@@ -139,13 +139,13 @@ def main():
                         game_over = True
                     else:
                         shape = new_shape
-
+'''
         # Draw everything
         screen.fill((0,0,0))
         board.draw(screen,shape)
         pygame.display.flip()
 
-    pygame.quit()
+    #pygame.quit()
 
 
-main()'''
+#main()
