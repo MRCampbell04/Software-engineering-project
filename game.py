@@ -1,7 +1,8 @@
 import pygame
 import sys
 from shapes import Shape, create_shape, CELL_SIZE
-from board import Board, GRID_X, GRID_Y, BLACK, WHITE, GRAY, font_path
+from board import Board, GRID_X, GRID_Y, BLACK, WHITE
+from home import  RED, font_path
 from home import Button
 
 # ------------------- Game Loop -------------------
