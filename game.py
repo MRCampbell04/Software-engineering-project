@@ -1,10 +1,19 @@
 import pygame
 import sys
+import random
+import os
+
+# ------------------- Paths for branches -------------------
+# عدّلي المسارات دي على حسب مكان كل برانش عندك
+sys.path.append(r"C:\Users\dinae\Downloads\Software-engineering-project-Dev-B")  # مكان shapes.py
+sys.path.append(r"C:\Users\dinae\Downloads\Software-engineering-project-Dev-C")   # مكان board.py
+
+# ------------------- Imports -------------------
 from shapes import Shape, create_shape
 from board import Board, GRID_X, GRID_Y, CELL_SIZE, BLACK, WHITE, RED, font_path
-from home import show_home  
+from home import show_home
 
-# UI Function
+# ------------------- UI Function -------------------
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     score_box_width = 180
     score_box_height = 35
@@ -30,7 +39,7 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     screen.blit(lines_label, (lines_x, labels_y))
     screen.blit(lines_value, (lines_x + (lines_label.get_width() - lines_value.get_width()) // 2, values_y))
 
-# Game Loop
+# ------------------- Game Loop -------------------
 def game_loop():
     screen = pygame.display.get_surface()
     clock = pygame.time.Clock()
@@ -128,7 +137,7 @@ def game_loop():
 
         pygame.display.flip()
 
-# Main
+# ------------------- Main -------------------
 def main():
     pygame.init()
     screen = pygame.display.set_mode((440, 750))
