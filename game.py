@@ -2,7 +2,7 @@ import pygame
 import sys
 from shapes import Shape, create_shape
 from board import Board, GRID_X, GRID_Y, CELL_SIZE, BLACK, WHITE, RED, font_path
-from home import show_home, Button
+from home import Button
 
 # ------------------- Game Loop -------------------
 def game_loop(screen):
@@ -10,7 +10,7 @@ def game_loop(screen):
     board = Board()
     shape = create_shape()
     fall_time = 0
-    fall_speed = 500  # السرعة الابتدائية للسقوط
+    fall_speed = 500
     game_over = False
 
     score = 0
@@ -21,16 +21,40 @@ def game_loop(screen):
     font_label = pygame.font.Font(font_path, 15)
     font_value = pygame.font.Font(font_path, 16)
 
+    # حالة اللعبة: "home", "playing", "game_over"
+    state = "home"
+
+    # إعداد زرار Home
+    start_button = Button("Start Game", 320)
+    leaderboard_button = Button("Leaderboard", 400)
+    about_button = Button("About Us", 480)
+    exit_button = Button("Exit", 580, width=200, color=RED, text_color=WHITE, hover_color=(230,80,80), filled=True)
+
+    buttons = [start_button, leaderboard_button, about_button, exit_button]
+
     running = True
     while running:
         dt = clock.tick(60)
-        fall_time += dt
+        if state == "playing":
+            fall_time += dt
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if game_over and event.type == pygame.KEYDOWN:
+            if state == "home":
+                for btn in buttons:
+                    if btn.is_clicked(event):
+                        if btn.text == "Start Game":
+                            state = "playing"
+                        elif btn.text == "Exit":
+                            pygame.quit()
+                            sys.exit()
+                        elif btn.text == "Leaderboard":
+                            print("Leaderboard pressed")
+                        elif btn.text == "About Us":
+                            print("About Us pressed")
+            elif state == "game_over" and event.type == pygame.KEYDOWN:
                 # إعادة تشغيل اللعبة
                 board = Board()
                 shape = create_shape()
@@ -39,9 +63,49 @@ def game_loop(screen):
                 score = 0
                 level = 1
                 lines_cleared = 0
+                state = "playing"
 
-        if not game_over:
-            # السقوط التلقائي
+        screen.fill(BLACK)
+
+        if state == "home":
+            # رسم Home Page
+            title_font = pygame.font.Font(font_path, 80)
+            title = title_font.render("Welcome", True, WHITE)
+            name = pygame.font.Font(font_path, 40).render("Tetris", True, WHITE)
+            screen.blit(title, (440//2 - title.get_width()//2, 120))
+            screen.blit(name, (440//2 - name.get_width()//2, 230))
+            for btn in buttons:
+                btn.draw(screen, pygame.font.Font(font_path, 32))
+
+        elif state == "playing":
+            # تحكم اللعبة
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                shape.move_left()
+                if not board.can_move(shape):
+                    shape.move_right()
+            if keys[pygame.K_RIGHT]:
+                shape.move_right()
+                if not board.can_move(shape):
+                    shape.move_left()
+            if keys[pygame.K_DOWN]:
+                shape.move_down()
+                if not board.can_move(shape):
+                    shape.y -= 1
+                    board.place(shape)
+                    cleared = board.clear_full_rows()
+                    if cleared > 0:
+                        lines_cleared += cleared
+                        score += cleared * 100
+                        level = lines_cleared // 5 + 1
+                        fall_speed = max(100, 500 - (level-1)*50)
+                    new_shape = create_shape()
+                    if not board.can_move(new_shape):
+                        game_over = True
+                        state = "game_over"
+                    else:
+                        shape = new_shape
+
             if fall_time > fall_speed:
                 shape.move_down()
                 if not board.can_move(shape):
@@ -56,51 +120,23 @@ def game_loop(screen):
                     new_shape = create_shape()
                     if not board.can_move(new_shape):
                         game_over = True
+                        state = "game_over"
                     else:
                         shape = new_shape
                 fall_time = 0
 
-            # تحكم اللاعب
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_LEFT]:
-                shape.move_left()
-                if not board.can_move(shape):
-                    shape.move_right()
-            if keys[pygame.K_RIGHT]:
-                shape.move_right()
-                if not board.can_move(shape):
-                    shape.move_left()
-            if keys[pygame.K_DOWN]:
-                # تسريع السقوط
-                shape.move_down()
-                if not board.can_move(shape):
-                    shape.y -= 1
-                    board.place(shape)
-                    cleared = board.clear_full_rows()
-                    if cleared > 0:
-                        lines_cleared += cleared
-                        score += cleared * 100
-                        level = lines_cleared // 5 + 1
-                        fall_speed = max(100, 500 - (level-1)*50)
-                    new_shape = create_shape()
-                    if not board.can_move(new_shape):
-                        game_over = True
-                    else:
-                        shape = new_shape
+            # رسم اللعبة
+            board.draw(screen, shape)
+            draw_ui(screen, font_score, font_label, font_value, score, level, lines_cleared)
 
-        # الرسم
-        screen.fill(BLACK)
-        board.draw(screen, shape)
-        draw_ui(screen, font_score, font_label, font_value, score, level, lines_cleared)
-
-        if game_over:
+        elif state == "game_over":
             font_go = pygame.font.Font(None, 50)
             text = font_go.render("GAME OVER - Press Any Key to Restart", True, RED)
             screen.blit(text, (440//2 - text.get_width()//2, 750//2))
 
         pygame.display.flip()
 
-# ------------------- UI -------------------
+# ------------------- Main UI -------------------
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     # Score Box
     score_box_width = 180
@@ -137,13 +173,9 @@ def main():
     screen = pygame.display.set_mode((440, 750))
     pygame.display.set_caption("Tetris")
 
-    # أولاً نعرض Home Page
-    show_home(screen)
-
-    # بعد الضغط على Start Game، نبدأ اللعبة
     game_loop(screen)
-
     pygame.quit()
 
 if __name__ == "__main__":
     main()
+
