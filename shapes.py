@@ -139,13 +139,13 @@ def main():
                         game_over = True
                     else:
                         shape = new_shape
-'''
+                        
         # Draw everything
         screen.fill((0,0,0))
         board.draw(screen,shape)
         pygame.display.flip()
 
-    #pygame.quit()
+    pygame.quit()
 
 
-#main()
+main()'''
