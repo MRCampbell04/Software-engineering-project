@@ -1,11 +1,11 @@
 import pygame
 import sys
 from shapes import Shape, create_shape
-from board import Board, GRID_X, GRID_Y, CELL_SIZE, BLACK, WHITE, RED, SILVER, LIGHT_RED, font_path
+from board import Board, GRID_X, GRID_Y, CELL_SIZE, BLACK, WHITE, RED, font_path
+from home import show_home  
 
-# ------------------- UI Function -------------------
+# UI Function
 def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
-    # Score Box
     score_box_width = 180
     score_box_height = 35
     score_box_x = (440 - score_box_width) // 2
@@ -16,7 +16,6 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     score_text_rect = score_text_surf.get_rect(center=score_box_rect.center)
     screen.blit(score_text_surf, score_text_rect)
 
-    # Level & Lines
     labels_y = 80
     values_y = 105
     level_x = GRID_X - 40
@@ -31,8 +30,9 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     screen.blit(lines_label, (lines_x, labels_y))
     screen.blit(lines_value, (lines_x + (lines_label.get_width() - lines_value.get_width()) // 2, values_y))
 
-# ------------------- Game Loop -------------------
-def game_loop(screen):
+# Game Loop
+def game_loop():
+    screen = pygame.display.get_surface()
     clock = pygame.time.Clock()
     board = Board()
     shape = create_shape()
@@ -58,7 +58,6 @@ def game_loop(screen):
                 pygame.quit()
                 sys.exit()
             if game_over and event.type == pygame.KEYDOWN:
-                # Restart the game
                 board = Board()
                 shape = create_shape()
                 fall_time = 0
@@ -68,7 +67,6 @@ def game_loop(screen):
                 lines_cleared = 0
 
         if not game_over:
-            # Automatic fall
             if fall_time > fall_speed:
                 shape.move_down()
                 if not board.can_move(shape):
@@ -87,7 +85,6 @@ def game_loop(screen):
                         shape = new_shape
                 fall_time = 0
 
-            # Player controls
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
                 shape.move_left()
@@ -114,95 +111,29 @@ def game_loop(screen):
                     else:
                         shape = new_shape
 
-        # Draw everything
         screen.fill(BLACK)
         board.draw(screen, shape)
         draw_ui(screen, font_score, font_label, font_value, score, level, lines_cleared)
 
-        # Game Over
         if game_over:
             font_go = pygame.font.Font(None, 50)
             text = font_go.render("GAME OVER - Press Any Key to Restart", True, RED)
-            screen.blit(text, (SCREEN_WIDTH//2 - text.get_width()//2, SCREEN_HEIGHT//2))
+            screen.blit(text, (440//2 - text.get_width()//2, 750//2))
 
-        # Win condition (اختياري، هنا مستوى 10)
         if level >= 10:
             font_win = pygame.font.Font(None, 50)
             text_win = font_win.render("YOU WIN!", True, WHITE)
-            screen.blit(text_win, (SCREEN_WIDTH//2 - text_win.get_width()//2, SCREEN_HEIGHT//2 - 50))
+            screen.blit(text_win, (440//2 - text_win.get_width()//2, 750//2 - 50))
             game_over = True
 
         pygame.display.flip()
 
-# ------------------- Menu -------------------
-class Button:
-    def __init__(self, text, y, width=270, height=50, color=WHITE, text_color=WHITE, hover_color=None, filled=False):
-        self.text = text
-        self.y = y
-        self.width = width
-        self.height = height
-        self.color = color
-        self.text_color = text_color
-        self.hover_color = hover_color or color
-        self.filled = filled
-        self.rect = pygame.Rect(SCREEN_WIDTH//2 - width//2, y, width, height)
-        self.border_radius = 12
-
-    def draw(self, surface, font):
-        mouse_pos = pygame.mouse.get_pos()
-        is_hovered = self.rect.collidepoint(mouse_pos)
-        current_color = self.hover_color if is_hovered else self.color
-        if self.filled:
-            pygame.draw.rect(surface, current_color, self.rect, border_radius=self.border_radius)
-        else:
-            pygame.draw.rect(surface, current_color, self.rect, 2, border_radius=self.border_radius)
-        label = font.render(self.text, True, self.text_color)
-        surface.blit(label, (self.rect.centerx - label.get_width()/2, self.rect.centery - label.get_height()/2))
-
-    def is_clicked(self, event):
-        return event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos)
-
-def show_menu(screen):
-    title_font = pygame.font.Font(font_path, 80)
-    button_font = pygame.font.Font(font_path, 32)
-
-    buttons = [
-        Button("Start Game", 320, text_color=BLACK, hover_color=SILVER, filled=True),
-        Button("Exit", 480, width=200, color=RED, text_color=WHITE, hover_color=LIGHT_RED, filled=True)
-    ]
-
-    running = True
-    while running:
-        screen.fill(BLACK)
-        title = title_font.render("Welcome", True, WHITE)
-        name = pygame.font.Font(font_path, 40).render("Tetris", True, WHITE)
-        screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, 120))
-        screen.blit(name, (SCREEN_WIDTH//2 - name.get_width()//2, 230))
-
-        for btn in buttons:
-            btn.draw(screen, button_font)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            for btn in buttons:
-                if btn.is_clicked(event):
-                    if btn.text == "Start Game":
-                        game_loop(screen)
-                        running = False
-                    elif btn.text == "Exit":
-                        pygame.quit()
-                        sys.exit()
-
-        pygame.display.flip()
-
-# ------------------- Main -------------------
+# Main
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    screen = pygame.display.set_mode((440, 750))
     pygame.display.set_caption("Tetris")
-    show_menu(screen)
+    show_home(screen, start_game_callback=game_loop)
     pygame.quit()
 
 if __name__ == "__main__":
