@@ -125,7 +125,8 @@ def game_loop(screen):
                 fall_time = 0
 
             # رسم اللعبة
-            shape.draw(screen, board)
+            #shape.draw(screen, board)
+            board.draw(screen, shape)
             draw_ui(screen, font_score, font_label, font_value, score, level, lines_cleared)
 
         elif state == "game_over":
