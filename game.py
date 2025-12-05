@@ -4,6 +4,11 @@ from shapes import Shape, create_shape, CELL_SIZE, BOARD_WIDTH, BOARD_HEIGHT
 from board import Board, draw_ui, GRID_X, GRID_Y, BLACK, WHITE
 from home import Button, RED, font_path  # افتراضياً عندك Home Page وButton
 
+# استدعاء صفحات About و Login (أطبق الربط هنا)
+# Login.main() يجب أن ترجع اسم المستخدم عند الضغط على Continue
+from Login import main as login_main
+from AboutUs import aboutus_screen
+
 # ------------------- Game Logic Functions -------------------
 
 def can_move(grid, shape):
@@ -74,18 +79,46 @@ def game_loop(screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
+            # تعامل مع أزرار الهوم
             if state == "home":
                 for btn in buttons:
                     if btn.is_clicked(event):
                         if btn.text == "Start Game":
-                            state = "playing"
+                            # افتح صفحة Login: login_main() متوقع ترجع اسم المستخدم
+                            try:
+                                username = login_main()
+                            except SystemExit:
+                                # لو login_main استدعى sys.exit()، نوقف البرنامج
+                                pygame.quit()
+                                sys.exit()
+                            except Exception as e:
+                                # لو حصل خطأ في صفحة login اطبع واختر عدم البدء
+                                print("Login error or no return value:", e)
+                                username = None
+
+                            if username:   # لو المستخدم دخل اسم (القيمة غير فارغة)
+                                # تقدر تحط هنا حفظ للاسم لو عايزة: player_name = username
+                                state = "playing"
+                            else:
+                                # لو login_main لم ترجع اسم، نبقى في الهوم (مش هنبدأ)
+                                state = "home"
+
                         elif btn.text == "Exit":
                             pygame.quit()
                             sys.exit()
                         elif btn.text == "Leaderboard":
                             print("Leaderboard pressed")
                         elif btn.text == "About Us":
-                            print("About Us pressed")
+                            # افتح صفحة AboutUs (هي داخل ملف AboutUs.py تابعتيه)
+                            try:
+                                aboutus_screen()
+                            except SystemExit:
+                                pygame.quit()
+                                sys.exit()
+                            except Exception as e:
+                                print("AboutUs error:", e)
+
             elif state == "game_over" and event.type == pygame.KEYDOWN:
                 # إعادة تشغيل اللعبة
                 grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
