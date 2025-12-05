@@ -2,32 +2,29 @@ import pygame
 import sys
 from shapes import Shape, create_shape, CELL_SIZE, BOARD_WIDTH, BOARD_HEIGHT
 from board import Board, draw_ui, GRID_X, GRID_Y, BLACK, WHITE
-from home import Button, RED, font_path  # افتراضياً عندك Home Page وButton
-
-# استدعاء صفحات About و Login (أطبق الربط هنا)
-# Login.main() يجب أن ترجع اسم المستخدم عند الضغط على Continue
-from Login import main as login_main
-from AboutUs import aboutus_screen
+from home import Button, RED, font_path
+from Login import LoginScreen
+from AboutUs import AboutUsScreen
 
 # ------------------- Game Logic Functions -------------------
 
 def can_move(grid, shape):
-    """تحقق إذا الشكل ممكن يتحرك بدون اصطدام"""
+    """Check if the shape can move without collision"""
     for x, y in shape.get_coords():
         if x < 0 or x >= BOARD_WIDTH or y >= BOARD_HEIGHT:
             return False
-        if y >= 0 and grid[y][x] != (0,0,0):
+        if y >= 0 and grid[y][x] != (0, 0, 0):
             return False
     return True
 
 def place_shape(grid, shape):
-    """ثبت الشكل في الشبكة"""
+    """Place the shape into the grid"""
     for x, y in shape.get_coords():
         if 0 <= y < BOARD_HEIGHT:
             grid[y][x] = shape.color
 
 def clear_full_rows(grid):
-    """مسح الصفوف المليانة وتحريك الباقي لأسفل"""
+    """Clear full rows and move others down"""
     cleared = 0
     new_grid = []
     for row in grid:
@@ -48,7 +45,7 @@ def game_loop(screen):
     fall_time = 0
     fall_speed = 800
 
-    # الشبكة داخل game.py
+    # Grid initialization
     grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
 
     score = 0
@@ -68,59 +65,52 @@ def game_loop(screen):
     font_label = pygame.font.Font(font_path, 15)
     font_value = pygame.font.Font(font_path, 16)
 
+    # Initialize pages
+    login_screen = LoginScreen(screen)
+    about_screen = AboutUsScreen(screen)
+
     running = True
     while running:
         dt = clock.tick(60)
         if state == "playing":
             fall_time += dt
 
-        # حدث اللعبة
+        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-            # تعامل مع أزرار الهوم
+            # Home page
             if state == "home":
                 for btn in buttons:
                     if btn.is_clicked(event):
                         if btn.text == "Start Game":
-                            # افتح صفحة Login: login_main() متوقع ترجع اسم المستخدم
-                            try:
-                                username = login_main()
-                            except SystemExit:
-                                # لو login_main استدعى sys.exit()، نوقف البرنامج
-                                pygame.quit()
-                                sys.exit()
-                            except Exception as e:
-                                # لو حصل خطأ في صفحة login اطبع واختر عدم البدء
-                                print("Login error or no return value:", e)
-                                username = None
-
-                            if username:   # لو المستخدم دخل اسم (القيمة غير فارغة)
-                                # تقدر تحط هنا حفظ للاسم لو عايزة: player_name = username
-                                state = "playing"
-                            else:
-                                # لو login_main لم ترجع اسم، نبقى في الهوم (مش هنبدأ)
-                                state = "home"
-
+                            state = "login"
                         elif btn.text == "Exit":
                             pygame.quit()
                             sys.exit()
                         elif btn.text == "Leaderboard":
                             print("Leaderboard pressed")
                         elif btn.text == "About Us":
-                            # افتح صفحة AboutUs (هي داخل ملف AboutUs.py تابعتيه)
-                            try:
-                                aboutus_screen()
-                            except SystemExit:
-                                pygame.quit()
-                                sys.exit()
-                            except Exception as e:
-                                print("AboutUs error:", e)
+                            state = "about"
 
+            # Login page
+            elif state == "login":
+                login_screen.handle_event(event)
+                if login_screen.continue_pressed:
+                    login_screen.continue_pressed = False
+                    state = "playing"
+
+            # About Us page
+            elif state == "about":
+                about_screen.handle_event(event)
+                if about_screen.back_pressed:
+                    about_screen.back_pressed = False
+                    state = "home"
+
+            # Game over restart
             elif state == "game_over" and event.type == pygame.KEYDOWN:
-                # إعادة تشغيل اللعبة
                 grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
                 current_shape = create_shape()
                 fall_time = 0
@@ -130,7 +120,7 @@ def game_loop(screen):
                 lines_cleared = 0
                 state = "playing"
 
-        # التحكم بالكيبورد
+        # Gameplay controls
         if state == "playing" and not game_over:
             keys = pygame.key.get_pressed()
             if keys[pygame.K_LEFT]:
@@ -157,6 +147,12 @@ def game_loop(screen):
                         game_over = True
                         state = "game_over"
 
+            # Rotate on UP key
+            if keys[pygame.K_UP]:
+                old_blocks = current_shape.rotate()
+                if not can_move(grid, current_shape):
+                    current_shape.blocks = old_blocks
+
             # Automatic fall
             if fall_time > fall_speed:
                 current_shape.move_down()
@@ -175,7 +171,7 @@ def game_loop(screen):
                         state = "game_over"
                 fall_time = 0
 
-        # رسم كل شيء
+        # Draw everything
         screen.fill(BLACK)
 
         if state == "home":
@@ -187,10 +183,14 @@ def game_loop(screen):
             for btn in buttons:
                 btn.draw(screen, pygame.font.Font(font_path, 32))
 
+        elif state == "login":
+            login_screen.draw()
+
+        elif state == "about":
+            about_screen.draw()
+
         elif state == "playing":
-            # رسم الشبكة
             board.draw_board(screen)
-            # رسم الأشكال الثابتة
             for r in range(BOARD_HEIGHT):
                 for c in range(BOARD_WIDTH):
                     color = grid[r][c]
@@ -199,7 +199,6 @@ def game_loop(screen):
                         y = GRID_Y + r * CELL_SIZE
                         rect = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
                         pygame.draw.rect(screen, color, rect)
-            # رسم الشكل الحالي
             for x, y in current_shape.get_coords():
                 if y >= 0:
                     px = GRID_X + x * CELL_SIZE
@@ -226,3 +225,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
