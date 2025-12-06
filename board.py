@@ -95,6 +95,7 @@ def draw_ui(screen, font_score, font_label, font_value, score, level, lines):
     screen.blit(hold_label, (hold_label_x, 70))
     hold_box_rect = pygame.Rect(hold_box_x, box_top_y, hold_box_width, box_height)
     pygame.draw.rect(screen, WHITE, hold_box_rect, 1, border_radius=5)
+    return hold_box_rect, next_box_rect, pause_icon_rect
 
 def main():
     pygame.init()
@@ -134,6 +135,7 @@ def main():
 
 if __name__ == "__main__":
      main()
+
 
 
 
