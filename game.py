@@ -65,7 +65,7 @@ def game_loop(screen):
     current_player_name = "Guest"
 
     # Pause button rectangle
-    pause_button_rect = pygame.Rect(370, 10, 60, 40)  #                 أعلى يمين
+    pause_button_rect = pygame.Rect(370, 10, 60, 40)  # Top right corner
 
     running = True
     while running:
@@ -103,19 +103,6 @@ def game_loop(screen):
                     about_screen.back_pressed = False
                     state = "home"
 
-            # Game over
-            elif state == "game_over" and event.type == pygame.KEYDOWN:
-                if score > 0:
-                    leaderboard_screen.save_score(current_player_name, score)
-                grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
-                current_shape = create_shape()
-                fall_time = 0
-                game_over = False
-                score = 0
-                level = 1
-                lines_cleared = 0
-                state = "playing"
-
             # Pause toggle
             if state == "playing" and event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if pause_button_rect.collidepoint(event.pos):
@@ -124,7 +111,6 @@ def game_loop(screen):
             # Pause menu buttons
             if paused:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    # Resume button
                     resume_rect = pygame.Rect(120, 300, 200, 50)
                     quit_rect = pygame.Rect(120, 400, 200, 50)
                     if resume_rect.collidepoint(event.pos):
@@ -217,6 +203,7 @@ def game_loop(screen):
                     pygame.draw.rect(screen, current_shape.color, (px, py, CELL_SIZE, CELL_SIZE))
             draw_ui(screen, font_score, font_label, font_value, score, level, lines_cleared)
 
+    
         # Pause menu overlay
         if paused:
             overlay = pygame.Surface((440, 750))
@@ -224,19 +211,50 @@ def game_loop(screen):
             overlay.fill(BLACK)
             screen.blit(overlay, (0,0))
 
-            # Resume button
             resume_rect = pygame.Rect(120, 300, 200, 50)
             quit_rect = pygame.Rect(120, 400, 200, 50)
-            pygame.draw.rect(screen, WHITE, resume_rect)
-            pygame.draw.rect(screen, WHITE, quit_rect)
+            pygame.draw.rect(screen, (255,255,255), resume_rect)
+            pygame.draw.rect(screen, (255,255,255), quit_rect)
+            
+
             font_btn = pygame.font.Font(font_path, 32)
             screen.blit(font_btn.render("Resume", True, BLACK), (resume_rect.x + 35, resume_rect.y + 10))
             screen.blit(font_btn.render("Quit", True, BLACK), (quit_rect.x + 60, quit_rect.y + 10))
 
+        # -------------------- Game Over Menu --------------------
         elif state == "game_over":
-            font_go = pygame.font.Font(None, 36)
-            text = font_go.render("GAME OVER - Press Any Key", True, (255,0,0))
-            screen.blit(text, (440//2 - text.get_width()//2, 750//2))
+            screen.fill(BLACK)
+            font_go = pygame.font.Font(None, 50)
+            go_text = font_go.render("GAME OVER", True, (255,0,0))
+            screen.blit(go_text, (440//2 - go_text.get_width()//2, 200))
+
+            button_font = pygame.font.Font(font_path, 32)
+            retry_rect = pygame.Rect(120, 350, 200, 50)
+            home_rect = pygame.Rect(70, 410, 300, 80)
+
+            pygame.draw.rect(screen, (255,255,255), retry_rect)
+            pygame.draw.rect(screen, (255,255,255), home_rect)
+
+            screen.blit(button_font.render("Retry", True, BLACK), (retry_rect.centerx - 50, retry_rect.centery - 20))
+            screen.blit(button_font.render("Back to Home", True, BLACK), (home_rect.centerx - 110, home_rect.centery - 20))
+
+            # Handle clicks on Game Over buttons
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if retry_rect.collidepoint(event.pos):
+                        grid = [[(0,0,0) for _ in range(BOARD_WIDTH)] for _ in range(BOARD_HEIGHT)]
+                        current_shape = create_shape()
+                        fall_time = 0
+                        game_over = False
+                        score = 0
+                        level = 1
+                        lines_cleared = 0
+                        state = "playing"
+                    elif home_rect.collidepoint(event.pos):
+                        state = "home"
 
         elif state == "leaderboard":
             leaderboard_screen.draw(current_player_name, score)
