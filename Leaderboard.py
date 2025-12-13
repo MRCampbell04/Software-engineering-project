@@ -8,6 +8,9 @@ class LeaderboardScreen:
         self.SCREEN_WIDTH = 440
         self.SCREEN_HEIGHT = 750
         self.font_path = "font/Audiowide-Regular.ttf"  
+        #icon 
+        window_icon = pygame.image.load("images/1.png") 
+        pygame.display.set_icon(window_icon)
 
         self.BLACK = (0, 0, 0)
         self.WHITE = (255, 255, 255)
@@ -49,9 +52,22 @@ class LeaderboardScreen:
             return []
 
     def save_score(self, name, score):
-        new_entry = {'name': name, 'score': score}
-        self.scores.append(new_entry)
+        normalized_name = name.lower()
+
+        existing = None
+        for entry in self.scores:
+            if entry['name'].lower() == normalized_name:
+                existing = entry
+                break
+
+        if existing:
+            if score > existing['score']:
+                existing['score'] = score
+        else:
+            self.scores.append({'name': name, 'score': score})
+
         self.scores = sorted(self.scores, key=lambda x: x['score'], reverse=True)
+
         with open(self.file_name, 'w') as f:
             json.dump(self.scores, f)
 

@@ -102,7 +102,7 @@ def main():
     pygame.font.init()
     
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Tetris") #Name of Game
+    pygame.display.set_caption("CubeTicks") #Name of Game
     
     font_path = "font/Audiowide-Regular.ttf"
     font_score = pygame.font.Font(font_path, 20)
@@ -135,7 +135,6 @@ def main():
 
 if __name__ == "__main__":
      main()
-
 
 
 

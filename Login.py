@@ -22,6 +22,9 @@ class LoginScreen:
         self.label_font = pygame.font.Font(self.font_path, 20)
         self.input_font = pygame.font.Font(self.font_path, 24)
         self.btn_font = pygame.font.Font(self.font_path, 22)
+        #icon 
+        window_icon = pygame.image.load("images/1.png") 
+        pygame.display.set_icon(window_icon)
 
         # Input
         self.user_text = ""
@@ -90,7 +93,7 @@ class LoginScreen:
         self.screen.fill(self.BLACK)
         self.draw_header_shapes()
         # Title
-        title_surf = self.title_font.render("TETRIS", True, self.WHITE)
+        title_surf = self.title_font.render("CubeTicks", True, self.WHITE)
         self.screen.blit(title_surf, (self.SCREEN_WIDTH//2 - title_surf.get_width()//2, 280))
         # Input label
         label_surf = self.label_font.render("User Name", True, self.WHITE)
