@@ -1,161 +1,139 @@
 import pygame
+import sys
+import urllib.request
+import io
 
-pygame.init()
+# ---------------- Constants ----------------
 
-# ------------------ Constants ------------------
-
-##
-# @brief Screen width.
-#
 SCREEN_WIDTH = 440
-
-##
-# @brief Screen height.
-#
 SCREEN_HEIGHT = 750
 
-##
-# @brief RGB color definitions.
-#
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (200, 50, 50)
 LIGHT_RED = (230, 80, 80)
 SILVER = (191, 191, 191)
 
-##
-# @brief Path to the game font file.
-#
 font_path = "font/Audiowide-Regular.ttf"
 
-# ------------------ Screen & Fonts ------------------
 
 ##
-# @brief Creates the main window and loads fonts.
+# @brief Loads image from a URL.
 #
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Tetris")
-
-title_font = pygame.font.Font(font_path, 80)
-button_font = pygame.font.Font(font_path, 32)
-game_font = pygame.font.Font(font_path, 40)
-
+# @param url Image URL.
+# @return Pygame image surface.
 ##
-# @brief Loads the game icon.
-#
-window_icon = pygame.image.load("images/1.png")
-pygame.display.set_icon(window_icon)
+def load_image_from_url(url):
+    with urllib.request.urlopen(url) as response:
+        data = response.read()
+        return pygame.image.load(io.BytesIO(data)).convert_alpha()
 
-# ------------------ Icon Loading ------------------
 
-##
-# @brief Loads and scales UI icons (red & blue).
-#
-try:
-    red_icon = pygame.image.load("images/red.png")
-    blue_icon = pygame.image.load("images/blue.png")
-    red_icon = pygame.transform.scale(red_icon, (125, 85))
-    blue_icon = pygame.transform.scale(blue_icon, (125, 85))
-except:
-    red_icon = blue_icon = None
+BLUE_ICON_URL = "https://raw.githubusercontent.com/MRCampbell04/Software-engineering-project/Dev-C/images/blue.png"
+RED_ICON_URL = "https://raw.githubusercontent.com/MRCampbell04/Software-engineering-project/Dev-C/images/red.png"
 
-# ------------------ Button Class ------------------
+blue_icon = None
+red_icon = None
+
 
 ##
 # @class Button
-# @brief Represents a clickable UI button in the menu.
-#
+# @brief Represents a clickable UI button.
+##
 class Button:
-
     ##
-    # @brief Initializes button properties.
-    # @param text Button text.
-    # @param y Vertical position.
-    # @param width Button width.
-    # @param height Button height.
-    # @param color Button color.
-    # @param text_color Color of the text.
-    # @param hover_color Color when hovered.
-    # @param filled Whether button is filled or outlined.
-    #
-    def __init__(self, text, y, width=270, height=50, color=WHITE, text_color=WHITE, hover_color=None, filled=False):
+    # @brief Button constructor.
+    ##
+    def __init__(self, text, y, width=270, height=50, color=WHITE,
+                 text_color=BLACK, hover_color=SILVER, filled=True):
+
         self.text = text
-        self.y = y
-        self.width = width
-        self.height = height
+        self.rect = pygame.Rect(SCREEN_WIDTH//2 - width//2, y, width, height)
         self.color = color
         self.text_color = text_color
-        self.hover_color = hover_color or color
+        self.hover_color = hover_color
         self.filled = filled
-        self.rect = pygame.Rect(SCREEN_WIDTH//2 - width//2, y, width, height)
         self.border_radius = 12
 
     ##
-    # @brief Draws the button on the screen.
-    # @param surface The display surface.
+    # @brief Draws the button.
     #
-    def draw(self, surface):
+    # @param surface Pygame screen.
+    # @param font Font used for text.
+    ##
+    def draw(self, surface, font):
         mouse_pos = pygame.mouse.get_pos()
-        is_hovered = self.rect.collidepoint(mouse_pos)
-        current_color = self.hover_color if is_hovered else self.color
+        color = self.hover_color if self.rect.collidepoint(mouse_pos) else self.color
 
         if self.filled:
-            pygame.draw.rect(surface, current_color, self.rect, border_radius=self.border_radius)
+            pygame.draw.rect(surface, color, self.rect, border_radius=self.border_radius)
         else:
-            pygame.draw.rect(surface, current_color, self.rect, 2, border_radius=self.border_radius)
+            pygame.draw.rect(surface, color, self.rect, 2, border_radius=self.border_radius)
 
-        label = button_font.render(self.text, True, self.text_color)
-        surface.blit(label, (self.rect.centerx - label.get_width()/2,
-                             self.rect.centery - label.get_height()/2))
+        label = font.render(self.text, True, self.text_color)
+        surface.blit(label, label.get_rect(center=self.rect.center))
 
     ##
-    # @brief Checks if the button was clicked.
-    # @param event Mouse click event.
-    # @return True if clicked.
+    # @brief Checks if button is clicked.
     #
+    # @param event Pygame event.
+    # @return True if clicked.
+    ##
     def is_clicked(self, event):
-        return event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.rect.collidepoint(event.pos)
+        return event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)
 
-# ------------------ Buttons Setup ------------------
-
-##
-# @brief Creates all menu buttons.
-#
-buttons = [
-    Button("Start Game", 320, text_color=BLACK, hover_color=SILVER, filled=True),
-    Button("Leaderboard", 400, text_color=BLACK, hover_color=SILVER, filled=True),
-    Button("AboutUs", 480, text_color=BLACK, hover_color=SILVER, filled=True),
-    Button("Exit", 580, width=200, color=RED, text_color=WHITE, hover_color=LIGHT_RED, filled=True)
-]
-
-# ------------------ Main Loop ------------------
 
 ##
-# @brief Main menu loop: draws elements and handles events.
+# @brief Displays the home screen.
 #
-running = True
-while running:
-    screen.fill(BLACK)
+# @param screen Pygame screen surface.
+# @return Action selected by user.
+##
+def show_home(screen):
+    global blue_icon, red_icon
 
-    if red_icon:
-        screen.blit(red_icon, (305, 20))
-    if blue_icon:
-        screen.blit(blue_icon, (20, 650))
+    if blue_icon is None:
+        blue_icon = load_image_from_url(BLUE_ICON_URL)
+        red_icon = load_image_from_url(RED_ICON_URL)
 
-    Title = title_font.render("Welcome", True, WHITE)
-    Name_Of_Game = game_font.render("Tetris", True, WHITE)
+    pygame.font.init()
 
-    screen.blit(Title, (SCREEN_WIDTH//2 - Title.get_width()/2, 120))
-    screen.blit(Name_Of_Game, (SCREEN_WIDTH//2 - Name_Of_Game.get_width()/2, 230))
+    title_font = pygame.font.Font(font_path, 70)
+    button_font = pygame.font.Font(font_path, 32)
 
-    for btn in buttons:
-        btn.draw(screen)
+    start_button = Button("Start Game", 320)
+    leaderboard_button = Button("Leaderboard", 400)
+    about_button = Button("AboutUs", 480)
+    exit_button = Button("Exit", 580, width=200, color=RED,
+                         text_color=WHITE, hover_color=LIGHT_RED)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    while True:
+        screen.fill(BLACK)
 
-    pygame.display.flip()
+        title = title_font.render("CubeTicks", True, WHITE)
+        screen.blit(title, title.get_rect(center=(SCREEN_WIDTH//2, 180)))
 
-# ------------------ Quit Game ------------------
-pygame.quit()
+        screen.blit(red_icon, (SCREEN_WIDTH - 90, 40))
+        screen.blit(blue_icon, (40, SCREEN_HEIGHT - 100))
+
+        start_button.draw(screen, button_font)
+        leaderboard_button.draw(screen, button_font)
+        about_button.draw(screen, button_font)
+        exit_button.draw(screen, button_font)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if start_button.is_clicked(event):
+                return "start"
+            if leaderboard_button.is_clicked(event):
+                return "leaderboard"
+            if about_button.is_clicked(event):
+                return "about"
+            if exit_button.is_clicked(event):
+                pygame.quit()
+                sys.exit()
+
+        pygame.display.flip()
