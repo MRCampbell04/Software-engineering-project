@@ -15,6 +15,9 @@ class AboutUsScreen:
         self.BLUE_LINE = (0, 0, 255)
         self.RED_LINE = (255, 0, 0)
         self.GREEN_LINE = (0, 255, 0)
+        #icon 
+        window_icon = pygame.image.load("images/1.png") 
+        pygame.display.set_icon(window_icon)
 
         # Fonts
         self.font_path = "font/Audiowide-Regular.ttf"
@@ -29,7 +32,7 @@ class AboutUsScreen:
             "Arc Team": ["Bassel Mohamed", "Ahmed Ezzat", "Mohamed Essam", "Mohamed Shabana", "Amr Ashraf", "Eslem Hossam", "Yousef Elsery"],
             "Dev Team A": ["Hoda Ghonem", "Maysan Mohamed", "Dina Elhami", "Yasmine Saber", "Menna Usama"],
             "Dev Team B": ["Omar Gazr", "Mohmed Metwaly", "Ahmed Hosny", "Ahmed Nagy", "Ahmed Desouki", "Gamal Afifi"],
-            "Dev Team C": ["Elsayed Mohamed", "Eyad Taha", "Abdelrahman Garhy", "Ahmed Hamada", "Mina Atef"],
+            "Dev Team C": ["Elsayed Mohamed", "Eyad Mohamed", "Abdelrahman Garhy", "Ahmed Hamada", "Mina Atef"],
             "Testing A": ["Menna Nasr", "Maryam Gharib", "Ruba Mohamed", "Aya Ibrahim", "Monia Nasry"],
             "Testing B": ["Yousef Zidan", "Ahmed Walid", "Omar Mosed", "Mohamed Samy", "Abram Michel", "Ali Mansour"],
             "Doc Team": ["Ahmed Shelby", "Ahmed Osama", "Ahmed Samaha", "Ahmed Beheiry", "Omar Shwareb"],
