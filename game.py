@@ -89,7 +89,7 @@ def reset_game():
         False  # paused
     )
 
-# ----------------- Main Game Loop -----------------
+# ----------------- Main Game Loop ---------------------
 
 def game_loop(screen):
     clock = pygame.time.Clock()
@@ -352,3 +352,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
